@@ -2463,6 +2463,16 @@ def TableImportCTA_TimeNoZenith(ttimeFile):
 
     return OutputTable
 
+def TableImportCTA_Petrov(ttimeFile):
+    ID, time1, time2 = np.genfromtxt(ttimeFile, usecols=(0, 1, 2), skip_header=1,unpack=True, dtype='str')
+    time = []
+    for i in range(len(time1)):
+        time.append((time1[i] + ' ' + time2[i]).split('"')[1])
+    OutputTable = Table([ID, time], names=['ID', 'Time'])
+
+    return OutputTable
+    
+
 
 def TableImportCTA_SetOfTimes(ttimeFile):
     trial, run, MergerID, time1, time2, Observatory = np.genfromtxt(ttimeFile, usecols=(0, 1, 2, 3, 4, 5),
