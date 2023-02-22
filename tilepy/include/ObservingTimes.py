@@ -290,7 +290,7 @@ def ObtainObservingTimes(totaltime,delayAlert,run,id,observatory,dirName,zenith)
         #tstart=tstart+obst+tslewbtwn
 
 
-def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew , run, id, observatory,dirName, zenith):
+def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew , ID, observatory,dirName, zenith):
 
     E1 = 2
     E2 = 100000
@@ -461,7 +461,8 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew , run, id, ob
     # Associating a GRB to the BNS mergers
     #######################################################
 
-    InputGRB = dirName + "/GammaCatalogV2.0/%s_%s.fits" % (run, id.split('ger')[1])
+    #InputGRB = dirName + "/GammaCatalogV2.0/%s_%s.fits" % (run, id.split('ger')[1])
+    InputGRB = dirName + "/GRB-GW_TeV_catO5/catO5_%s.fits" % (ID)
     hdu_list = fits.open(InputGRB)
     # hdu_list.info()
 

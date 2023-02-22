@@ -1,4 +1,4 @@
-from .PointingTools import (NightDarkObservation,
+from .PointingTools import (NightDarkObservation,SelectObservatory_fromHotspot,
                                   NightDarkObservationwithGreyTime,LoadHealpixMap, Get90RegionPixReduced,
                                   ZenithAngleCut,ComputeProbability2D,
                                   FulfillsRequirement,
@@ -767,14 +767,22 @@ def PGWonFoV_WindowsfromIRFs(filename, InputChar, TC, parameters, dirName):
     return (SuggestedPointings, ObservationTime0, obspar.FOV, nside, len(tobs))
 
 
-def PGWonFoV_WindowOptimisation(filename, InputChar, TC, parameters, datasetDir, outDir):
+def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, outDir):
 
-    UseObs = InputChar['Observatory']
-    run = InputChar['run']
-    mergerID = InputChar['MergerID']
+    # UseObs = InputChar['Observatory']
+    UseObs = SelectObservatory_fromHotspot(filename)
+    
+    #ID si GWCosmos
+    # run = InputChar['run']
+    # mergerID = InputChar['MergerID']
+    # ID = run + '_' + mergerID
+    
+    #ID retrieved from the filename
+    ID = str.split('/')[-1].split('.')[1]
+
     # zenith=InputChar['Zenith']
     
-    ObservationTime0 = datetime.datetime.strptime(InputChar['Time'], '%Y-%m-%d %H:%M:%S')
+    ObservationTime0 = datetime.datetime.strptime(timeStr, '%Y-%m-%d %H:%M:%S')
     ObservationTime0 = pytz.utc.localize(ObservationTime0)
 
     # Main parameters from config
@@ -784,7 +792,9 @@ def PGWonFoV_WindowOptimisation(filename, InputChar, TC, parameters, datasetDir,
 
 
     ##################
-    path = outDir + '/PointingPlotting/' + run + '_' + mergerID + '/EvolutionPlot/'
+    
+    #path = outDir + '/PointingPlotting/' + run + '_' + mergerID + '/EvolutionPlot/'
+    path = outDir + '/PointingPlotting/' + ID + '/EvolutionPlot/'
     # Observatory
     if UseObs == 'South':
         print('Observed form the', UseObs)
@@ -850,7 +860,8 @@ def PGWonFoV_WindowOptimisation(filename, InputChar, TC, parameters, datasetDir,
 
     # print('----------   NEW FOLLOW-UP ATTEMPT   ----------')
 
-    # Set of delays and slewing times in seconds
+    # Set of delays and slewing times
+    # Units: seconds
     totalTime = 172800  # 48h
     followupDelay = 30  # Minimum delay to start observaiton
     SlewingTime = 210  # Slewing to first position
@@ -860,7 +871,7 @@ def PGWonFoV_WindowOptimisation(filename, InputChar, TC, parameters, datasetDir,
     # From the injection time, look for the next window. Time is the time of the first observation
     ObservationTime = ObservationTime0 + datetime.timedelta(seconds=total_followupDelay)
 
-    print("Main info of this scheduling:", totalTime, total_followupDelay, run, mergerID, TC, obspar.Location)
+    print("Main info of this scheduling:", totalTime, total_followupDelay, ID, TC, obspar.Location)
 
     TotalNights = 2
     counter = 0
@@ -940,7 +951,7 @@ def PGWonFoV_WindowOptimisation(filename, InputChar, TC, parameters, datasetDir,
                     print("----------------------------")
                     # TO-DO: Need to have a class to set all this parameters for an observation, so there are less arguments passed.
                     P_GW, TC, ObsExp, ZenIni, ZenEnd, ObsCase, pixlist, ipixlistHR = ComputeProbability2D_SelectClusters(
-                        prob, highres, radecs,  TotalExposure, StartObsTime, DelayObs, interObsSlew, obspar, run, mergerID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
+                        prob, highres, radecs,  TotalExposure, StartObsTime, DelayObs, interObsSlew, obspar, ID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
                     print("=============")
                     print("P_GW, ObsExp, ZenIni, ZenEnd, ObsCase")
                     print(P_GW, ObsExp, ZenIni, ZenEnd, ObsCase)
