@@ -2888,6 +2888,9 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
     if (np.any(sortcat['ZENITH_INI'] > 55)):
         ObsCase, texp60 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,
                                                      datasetDir, zenith=60)
+        #  Here we should change that by from gwobserve import observe_grb and the corrent grb sens file
+        # time = observe_grb(grb_file_path, sensitivity: Sensitivity, start_time: float = 0, max_time=None, target_precision=10, _max_loops=1000,)
+        
         print("ObsCase60", ObsCase,'time =', texp60)
         # Cat60 = sortcat[sortcat['ZENITH_INI'] >55]
         # print("ObsCase60", ObsCase)
