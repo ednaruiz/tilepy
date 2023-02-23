@@ -1,5 +1,5 @@
 from .PointingTools import (NightDarkObservation,SelectObservatory_fromHotspot,
-                                  NightDarkObservationwithGreyTime,LoadHealpixMap, Get90RegionPixReduced,
+                            NightDarkObservationwithGreyTime,LoadHealpixMap, Get90RegionPixReduced,
                                   ZenithAngleCut,ComputeProbability2D,
                                   FulfillsRequirement,
                                   VisibleAtTime,LoadGalaxies,CorrelateGalaxies_LVC, SubstractPointings2D,SimpleGWprob,ComputeProbBCFOV,
@@ -767,6 +767,7 @@ def PGWonFoV_WindowsfromIRFs(filename, InputChar, TC, parameters, dirName):
     return (SuggestedPointings, ObservationTime0, obspar.FOV, nside, len(tobs))
 
 
+
 def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, outDir):
 
     # UseObs = InputChar['Observatory']
@@ -950,8 +951,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                     print("DelayObs", DelayObs)
                     print("----------------------------")
                     # TO-DO: Need to have a class to set all this parameters for an observation, so there are less arguments passed.
-                    P_GW, TC, ObsExp, ZenIni, ZenEnd, ObsCase, pixlist, ipixlistHR = ComputeProbability2D_SelectClusters(
-                        prob, highres, radecs,  TotalExposure, StartObsTime, DelayObs, interObsSlew, obspar, ID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
+                    P_GW, TC, ObsExp, ZenIni, ZenEnd, ObsCase, pixlist, ipixlistHR = ComputeProbability2D_SelectClusters(prob, highres, radecs,  TotalExposure, StartObsTime, DelayObs, interObsSlew, obspar, ID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
                     print("=============")
                     print("P_GW, ObsExp, ZenIni, ZenEnd, ObsCase")
                     print(P_GW, ObsExp, ZenIni, ZenEnd, ObsCase)

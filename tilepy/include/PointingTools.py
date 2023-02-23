@@ -1463,7 +1463,6 @@ def SelectObservatory_fromHotspot(filename):
     else:
         UseObs = 'South'
     return UseObs
-    
 
 def ComputeProbBCFOVSimple(prob,time,observatory, visiGals, allGals, tsum_dP_dV, nside, thisminz,max_zenith, FOV, tname,
                            tsavedcircle,dirName, doplot):
@@ -2489,8 +2488,6 @@ def TableImportCTA_Petrov(ttimeFile):
 
     return OutputTable
     
-
-
 def TableImportCTA_SetOfTimes(ttimeFile):
     trial, run, MergerID, time1, time2, Observatory = np.genfromtxt(ttimeFile, usecols=(0, 1, 2, 3, 4, 5),
                                                                     skip_header=1, unpack=True, dtype='str')
@@ -2815,9 +2812,7 @@ def ZenithAngleCut_TwoTimes(prob, nside, time, time1, MinProbCut, max_zenith, ob
 
 
 def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, time,
-                                        DelayObs, interObsSlew, obspar,
-                                        ID, ipixlist, ipixlistHR, counter, datasetDir, outDir, usegreytime,
-                                        plot):
+                                        DelayObs, interObsSlew, obspar, ID, ipixlist, ipixlistHR, counter, datasetDir, outDir, usegreytime,plot):
     '''
     Compute probability in 2D by taking the highest value pixel
     '''
@@ -2906,8 +2901,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
     mask2 = sortcat['ZENITH_INI'] <= 55
 
     if (sortcat['ZENITH_INI'][mask1 & mask2].any()):
-        ObsCase, texp40 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,
-                                                     datasetDir, zenith=40)
+        ObsCase, texp40 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,datasetDir, zenith=40)
         print("ObsCase40", ObsCase, 'time=', texp40)
         sortcat['EXPOSURE'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = texp40
         # Cat40 = sortcat[(30 < sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] < 55)]
@@ -2922,8 +2916,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
         sortcat["ZENITH_END"][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = pix_zen40
 
     if (np.any(sortcat['ZENITH_INI'] < 30)):
-        ObsCase, texp20 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,
-                                                     datasetDir, zenith=20)
+        ObsCase, texp20 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar, datasetDir, zenith=20)
         print("ObsCase20", ObsCase, 'time=',texp20)
         sortcat['EXPOSURE'][sortcat['ZENITH_INI'] < 30] = texp20
         # Cat20 = sortcat[sortcat['ZENITH_INI'] < 30]
