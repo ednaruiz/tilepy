@@ -2591,9 +2591,8 @@ def ProduceSummaryFile(InputList, InputObservationList, allPossiblePoint, foundI
         outfilename = outDir + '/SummaryFile/' + name + '_SimuS' + typeSimu + str("{:03d}".format(j)) + '.txt'
         f = open(outfilename, 'w')
         f.write(
-            'RunList' + ' ' + 'MergerID' + ' ' + 'Distance' + ' ' + 'Theta' + ' ' + 'A90' + ' ' + 'Luminosity' + ' ' + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
-        f.write(str(InputList['run'][j]) + ' ' + InputList['MergerID'][j].split('r')[-1] + ' ' + str(
-            InputList['Distance'][j]) + ' ' + str(InputList['theta'][j]) + ' ' + str(InputList['A90'][j]) + ' ' + str(
+            'ID' + ' ' + 'Distance' + ' ' + 'Theta' + ' ' + 'A90' + ' ' + 'Luminosity' + ' ' + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
+        f.write(InputList['ID'][j] + ' ' + str(InputList['Distance'][j]) + ' ' + str(InputList['theta'][j]) + ' ' + str(InputList['A90'][j]) + ' ' + str(
             luminosity) + ' ' + str(len(InputObservationList)) + ' ' + str(allPossiblePoint) + ' ' + str(
             foundIn) + ' ' + str(0) + ' ' + str(totalProb) + ' ' + 'True' + '\n')
     else:
@@ -2610,8 +2609,8 @@ def ProduceSummaryFile(InputList, InputObservationList, allPossiblePoint, foundI
         # print(outfilename)
         f = open(outfilename, 'w')
         f.write(
-            'RunList' + ' ' + 'MergerID' + ' ' + 'Distance' + ' ' + 'Theta' + ' ' + 'A90' + ' ' + 'Luminosity' + ' ' + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
-        f.write(str(InputList['run'][j]) + ' ' + InputList['MergerID'][j].split('r')[-1] + ' ' + str(
+            'ID' + ' ' + 'Distance' + ' ' + 'Theta' + ' ' + 'A90' + ' ' + 'Luminosity' + ' ' + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
+        f.write(str(InputList['ID'][j] +  + ' ' + str(
             InputList['Distance'][j]) + ' ' + str(InputList['theta'][j]) + ' ' + str(InputList['A90'][j]) + ' ' + str(
             luminosity) + ' ' + str(len(InputObservationList)) + ' ' + str(allPossiblePoint) + ' ' + str(
             foundFirst) + ' ' + str(foundTimes) + ' ' + str(totalProb) + ' ' + 'True' + '\n')
@@ -2883,7 +2882,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
     if (np.any(sortcat['ZENITH_INI'] > 55)):
         ObsCase, texp60 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,
                                                      datasetDir, zenith=60)
-        #  Here we should change that by from gwobserve import observe_grb and the corrent grb sens file
+        # TODO: Here we should change that by from gwobserve.py import observe_grb and the corrent grb sens file
         # time = observe_grb(grb_file_path, sensitivity: Sensitivity, start_time: float = 0, max_time=None, target_precision=10, _max_loops=1000,)
         
         print("ObsCase60", ObsCase,'time =', texp60)
@@ -2976,7 +2975,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
             # PLOT THE RESULTS
             if (plot):
                 # path = outDir + '/EvolutionPlot'
-                path = '%s/Pointing_Plotting/%s_%s/EvolutionPlot' % (outDir, run, mergerID)
+                path = '%s/Pointing_Plotting/%s/EvolutionPlot' % (outDir,ID)
                 if not os.path.exists(path):
                     os.makedirs(path)
                 # nside = 1024
