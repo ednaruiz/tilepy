@@ -624,6 +624,76 @@ def GetGWMap(URL):
 
     return fitsfile, filename
 
+def UNIQSkymap_toNested(skymap_fname):
+    sky_tab = Table.read(skymap_fname)
+    healpix_skymaps_dict = get_lvk_uniq_maps(sky_tab, 'max')
+    #prob = healpix_skymaps_dict['PROBDENSITY']
+    return healpix_skymaps_dict
+
+def get_lvk_uniq_maps(sky_map, Order, map_names='all'):
+    
+    un_inds = sky_map['UNIQ']
+    
+    order = (np.log2(un_inds / 4).astype(np.int) /
+             2).astype(np.int)
+    inds = (un_inds - 4 * (np.power(4, order))).astype(np.int)
+    
+    if Order == 'max':
+        Order = np.max(order)
+    
+    Nside = int(2 ** Order)
+    Npix = hp.nside2npix(Nside)
+    
+    if map_names == 'all':
+        keys = ['PROB', 'DISTMU', 'DISTSIGMA', 'DISTNORM']
+    else:
+        keys = map_names
+    maps = {}
+    
+    for k in keys:
+        maps[k] = np.zeros(Npix)
+
+    # print np.min(order), np.max(order)
+    
+    for ii in range(np.max(order), np.min(order) - 1, -1):
+        
+        nside = 2 ** ii
+        npix = hp.nside2npix(nside)
+        bl = (order == ii)
+
+        for k in maps.keys():
+            a = hp.UNSEEN * np.ones(npix)
+            if k == 'PROB':
+                a[inds[bl]] = sky_map['PROBDENSITY'][bl]
+
+            else:
+                a[inds[bl]] = sky_map[k][bl]
+            if ii == Order:
+                bl_ = (a != hp.UNSEEN)
+                maps[k][bl_] += a[bl_]
+                del a
+            else:
+                a_ = hp.ud_grade(a, nside_out=Nside, \
+                                 order_in='Nested', order_out='Nested')
+                bl_ = (a_ != hp.UNSEEN)
+                maps[k][bl_] += a_[bl_]
+                del a, a_
+        
+    maps['PROB'] = maps['PROB']*(np.pi / 180) ** 2 * hp.nside2pixarea(Nside, degrees=True)
+    #print('Total probability is:', maps['PROB'].sum())
+    return maps
+    
+def uniq2order_ind(uniq):
+    order = (np.log2(uniq / 4).astype(np.int) / 2).astype(np.int)
+    inds = (uniq - 4 * (np.power(4, order))).astype(np.int)
+    return order, inds
+
+def order_inds2uniq(order, inds):
+    uniq = 4 * (np.power(4, order)).astype(np.int) + inds
+    return uniq
+
+
+
 
 def Check2Dor3D(fitsfile,filename):
 
@@ -707,6 +777,39 @@ def LoadHealpixMap(thisfilename):
     fitsfile.close()
 
     return tprob, tdistmu, tdistsigma, tdistnorm, tdetectors, tevent_id, tdistmean, tdisterr
+
+def LoadHealpixUNIQMap(thisfilename):
+    
+    '''Download aLIGO HEALpix map and keep in cache
+        RETURNS:
+        --------
+
+        tprob : array of p-values as a function of sky position
+        tdistmu : array of distance estimate
+        tdistsigma : array of error on distance estimates
+        distnorm : array of distance normalisations
+        detectors: which interferometers triggered
+        event_id: ID of the event
+        distmean: mean distance from the header
+        disterr: error on distance from the header
+        '''
+    
+    tdistmu = []
+    tdistsigma = []
+    tdistnorm = []
+
+    PrintFileName = "Loading LVC HEALPix UNIQ map from file: " + thisfilename
+    print(PrintFileName)
+    healpix_skymaps_dict = UNIQSkymap_toNested(thisfilename)
+
+    tprob = healpix_skymaps_dict['PROB']
+    tdistmu = healpix_skymaps_dict['DISTMU']
+    tdistsigma = healpix_skymaps_dict['DISTSIGMA']
+    tdistnorm = healpix_skymaps_dict['DISTNORM']
+
+
+    return tprob, tdistmu, tdistsigma, tdistnorm
+
 
 def NightDarkObservation(time, obspar):
     '''
@@ -1448,9 +1551,11 @@ def Afterglow():
     print('Afterglow!')
 
 def ObtainHighestProbabilityCoordinates(filename):
-    hpx = hp.read_map(filename)
-    ipix_max = np.argmax(hpx)
-    nside = hp.npix2nside(len(hpx))
+    hpx = UNIQSkymap_toNested(filename)
+    hpx_prob = hpx['PROB']
+    print(sum(hpx_prob))
+    ipix_max = np.argmax(hpx_prob)
+    nside = hp.npix2nside(len(hpx_prob))
     theta, phi = hp.pix2ang(nside, ipix_max)
     ra = np.rad2deg(phi)
     dec = np.rad2deg(0.5 * np.pi - theta)
@@ -2250,7 +2355,7 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 def Get90RegionPixReduced(hpxx, percentage, Nnside):
 
     nside = 512  # size of map used for contour determination
-    hpx = hp.ud_grade(hpxx, nside, power=-2)
+    hpx = hp.ud_grade(hpxx, nside_out = nside, power=-2, order_in='Nested', order_out='Nested')
 
     sort = sorted(hpx, reverse=True)
     cumsum = np.cumsum(sort)
@@ -2610,7 +2715,7 @@ def ProduceSummaryFile(InputList, InputObservationList, allPossiblePoint, foundI
         f = open(outfilename, 'w')
         f.write(
             'ID' + ' ' + 'Distance' + ' ' + 'Theta' + ' ' + 'A90' + ' ' + 'Luminosity' + ' ' + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
-        f.write(str(InputList['ID'][j] +  + ' ' + str(
+        f.write(str(InputList['ID'][j]) +  + ' ' + str(
             InputList['Distance'][j]) + ' ' + str(InputList['theta'][j]) + ' ' + str(InputList['A90'][j]) + ' ' + str(
             luminosity) + ' ' + str(len(InputObservationList)) + ' ' + str(allPossiblePoint) + ' ' + str(
             foundFirst) + ' ' + str(foundTimes) + ' ' + str(totalProb) + ' ' + 'True' + '\n')

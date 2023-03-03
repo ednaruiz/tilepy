@@ -1,12 +1,11 @@
 from .PointingTools import (NightDarkObservation,SelectObservatory_fromHotspot,
-                            NightDarkObservationwithGreyTime,LoadHealpixMap, Get90RegionPixReduced,
-                                  ZenithAngleCut,ComputeProbability2D,
-                                  FulfillsRequirement,
-                                  VisibleAtTime,LoadGalaxies,CorrelateGalaxies_LVC, SubstractPointings2D,SimpleGWprob,ComputeProbBCFOV,
-                                  Tools,LoadGalaxies_SteMgal, CorrelateGalaxies_LVC_SteMass, SubstractPointings,
-                                  ModifyCatalogue,FulfillsRequirementGreyObservations,ComputeProbPGALIntegrateFoV,
-                                  ModifyCataloguePIX, ObservationParameters, NextWindowTools,
-                                  ComputeProbability2D_SelectClusters,GiveProbToGalaxy, LoadGalaxiesSimulation)
+                            NightDarkObservationwithGreyTime,LoadHealpixMap,LoadHealpixUNIQMap,
+                            Get90RegionPixReduced, ZenithAngleCut,ComputeProbability2D,
+                            FulfillsRequirement, VisibleAtTime,LoadGalaxies,CorrelateGalaxies_LVC, SubstractPointings2D,SimpleGWprob,ComputeProbBCFOV,
+                            Tools,LoadGalaxies_SteMgal, CorrelateGalaxies_LVC_SteMass, SubstractPointings,
+                            ModifyCatalogue,FulfillsRequirementGreyObservations,ComputeProbPGALIntegrateFoV,
+                            ModifyCataloguePIX, ObservationParameters, NextWindowTools,
+                            ComputeProbability2D_SelectClusters,GiveProbToGalaxy, LoadGalaxiesSimulation)
 from .Observatories import CTASouthObservatory,CTANorthObservatory
 import numpy as np
 from astropy import units as u
@@ -773,17 +772,12 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     # UseObs = InputChar['Observatory']
     UseObs = SelectObservatory_fromHotspot(filename)
     
-    #ID si GWCosmos
-    # run = InputChar['run']
-    # mergerID = InputChar['MergerID']
-    # ID = run + '_' + mergerID
-    
     #ID retrieved from the filename
-    ID = str.split('/')[-1].split('.')[1]
+    ID = filename.split('/')[-1].split('.')[1]
 
     # zenith=InputChar['Zenith']
     
-    ObservationTime0 = datetime.datetime.strptime(timeStr, '%Y-%m-%d %H:%M:%S')
+    ObservationTime0 = datetime.datetime.strptime(timeStr.split('.')[0], '%Y-%m-%d %H:%M:%S')
     ObservationTime0 = pytz.utc.localize(ObservationTime0)
 
     # Main parameters from config
@@ -841,12 +835,13 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     print()
 
     print('Loading map from ', filename)
-    tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(filename)
+    tprob, distmu, distsigma, distnorm  = LoadHealpixUNIQMap(filename)
     prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
 
     nside = obspar.ReducedNside
 
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
+    
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(prob, obspar.PercentCoverage, obspar.ReducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
@@ -950,7 +945,6 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                     print("TotalExposure", TotalExposure)
                     print("DelayObs", DelayObs)
                     print("----------------------------")
-                    # TO-DO: Need to have a class to set all this parameters for an observation, so there are less arguments passed.
                     P_GW, TC, ObsExp, ZenIni, ZenEnd, ObsCase, pixlist, ipixlistHR = ComputeProbability2D_SelectClusters(prob, highres, radecs,  TotalExposure, StartObsTime, DelayObs, interObsSlew, obspar, ID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
                     print("=============")
                     print("P_GW, ObsExp, ZenIni, ZenEnd, ObsCase")
