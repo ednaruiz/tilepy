@@ -292,3 +292,115 @@ def GetSchedule_GBM(URL, date,datasetDir,outDir,cfgFile):
         else:
             FOLLOWUP = False
             print('No observations are scheduled')
+
+
+
+
+def GetSchedule_GW_AstroCOLIBRI(URL, date,datasetDir,outDir, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
+                 HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
+                 MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
+                 Duration, MinDuration, UseGreytime, MinSlewing, online,
+                 MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
+                 FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
+                 Mangrove):
+
+    targetType = 'GW_Pointing'
+    fitsMap, filename = GetGWMap(URL)
+    prob, has3D = Check2Dor3D(fitsMap,filename)
+
+    name = URL.split('/')[-3]
+
+    print("===========================================================================================")
+    PointingsFile = "False"
+    galaxies = datasetDir + "/GLADE.txt"
+    #cfgFile = "./configs/FollowupParameters.ini"
+
+    if has3D:
+
+        ObservationTime = date
+        outputDir = "%s/%s" % (outDir, name)
+        dirName = '%s/PGallinFoV' % outputDir
+
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
+
+        print("===========================================================================================")
+        print("Starting the LST GW - 3D pointing calculation with the following parameters\n")
+        print("Filename: ", name)
+        print("Date: ", ObservationTime)
+        print("Previous pointings: ", PointingsFile)
+        print("Catalog: ", galaxies)
+        print("Dataset: ", datasetDir)
+        print("Output: ", outputDir)
+        
+        obspar = ObservationParameters()
+        obspar.from_args(name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
+                 HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
+                 MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
+                 Duration, MinDuration, UseGreytime, MinSlewing, online,
+                 MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
+                 FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
+                 Mangrove)
+
+        SuggestedPointings, cat = PGalinFoV(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
+
+        print(SuggestedPointings)
+        print("===========================================================================================")
+        print()
+
+        if (len(SuggestedPointings) != 0):
+            FOLLOWUP = True
+            outfilename = '%s/SuggestedPointings_GWOptimisation.txt' % dirName
+            ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
+            print()
+            RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName,
+                         '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name)
+            PointingPlotting(prob, obspar, name, dirName,
+                             '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name, filename)
+        else:
+            FOLLOWUP = False
+            print('No observations are scheduled')
+
+    else:
+
+        ObservationTime = date
+        outputDir = "%s/%s" % (outDir, name)
+        dirName = '%s/PGWinFoV' % outputDir
+
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
+
+        print("===========================================================================================")
+        print("Starting the LST GW - 2D pointing calculation with the following parameters\n")
+        print("Filename: ", name)
+        print("Date: ", ObservationTime)
+        print("Previous pointings: ", PointingsFile)
+        print("Catalog: ", galaxies)
+        print("Parameters: ", cfgFile)
+        print("Dataset: ", datasetDir)
+        print("Output: ", outputDir)
+        
+        obspar = ObservationParameters()
+        obspar.from_configfile(cfgFile)
+
+        SuggestedPointings, t0 = PGWinFoV(filename, ObservationTime, PointingsFile, obspar, dirName)
+
+        print(SuggestedPointings)
+        print("===========================================================================================")
+        print()
+
+        if (len(SuggestedPointings) != 0):
+            FOLLOWUP = True
+            outfilename = '%s/SuggestedPointings_GWOptimisation.txt' % dirName
+            ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
+            print()
+            cat = LoadGalaxies(galaxies)
+            RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName,
+                         '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name)
+            PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name, filename)
+        else:
+            FOLLOWUP = False
+            print('No observations are scheduled')
+
+
+

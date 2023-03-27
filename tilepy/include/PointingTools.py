@@ -491,11 +491,12 @@ class ObservationParameters(object):
                  MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
                  FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
                  Mangrove):
-        
+
+        #observatory
         self.name = name
-        self.Lat = Lat
-        self.Lon = Lon
-        self.Height = Height
+        self.Lat = Lat * u.deg
+        self.Lon = Lon * u.deg
+        self.Height = Height * u.m
         self.Location = EarthLocation(lat=self.Lat, lon=self.Lon,
                                       height=self.Height)
 
