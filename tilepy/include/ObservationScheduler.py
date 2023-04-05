@@ -366,8 +366,8 @@ def GetSchedule_GW_AstroCOLIBRI(URL, date,datasetDir,outDir, name, Lat, Lon, Hei
         outputDir = "%s/%s" % (outDir, name)
         dirName = '%s/PGWinFoV' % outputDir
 
-        #if not os.path.exists(dirName):
-            #os.makedirs(dirName)
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
 
         print("===========================================================================================")
         print("Filename: ", name)
