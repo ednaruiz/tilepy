@@ -21,7 +21,16 @@ import json
 
 
 def GetSchedule_confile(URL, date,datasetDir,outDir,cfgFile, Type):
-
+    '''
+    Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
+    Args:
+        URL: the url of the probability fits or  png map
+        date: the desired time for scheduling to start 
+        datasetDir: Path to the directory containting the datset like the galaxy catalog
+        outDir: Path to the output directory where the schedules and plots will eb saved 
+        cfgFile: Path to the configuration file 
+        Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
+    '''
     if Type == 'gbmpng':
         targetType = 'GBM_Pointing'
         fitsMap, filename = GetGBMMap(URL)
@@ -127,13 +136,24 @@ def GetSchedule_confile(URL, date,datasetDir,outDir,cfgFile, Type):
             print('No observations are scheduled')
 
 
-def GetSchedule_funcarg(Type, URL, date,datasetDir,outDir, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
+def GetSchedule_funcarg(URL, date,datasetDir,outDir, Type, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
                  HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
                  MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                  Duration, MinDuration, UseGreytime, MinSlewing, online,
                  MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
                  FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
                  Mangrove):
+    '''
+    Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
+    Args:
+        URL: the url of the probability fits or  png map
+        date: the desired time for scheduling to start 
+        datasetDir: Path to the directory containting the datset like the galaxy catalog
+        outDir: Path to the output directory where the schedules and plots will eb saved 
+        cfgFile: Path to the configuration file 
+        Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
+        All the rest of the arguments might be put in one obspar class and can be found in a configuration file
+    '''
 
     if Type == 'gbmpng':
         targetType = 'GBM_Pointing'
