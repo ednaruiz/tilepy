@@ -724,7 +724,7 @@ def Check2Dor3D(fitsfile,filename):
     if InsidePlane:
         has3D = False
 
-    if tdistmean > 150:
+    if tdistmean > 300:
         has3D = False
 
     return prob, has3D
