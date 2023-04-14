@@ -31,6 +31,7 @@ import numpy.ma as ma
 from six.moves import configparser
 import six
 from gdpyc import GasMap, DustMap
+import tables
 if six.PY2:
   ConfigParser = configparser.SafeConfigParser
 else:
@@ -1225,9 +1226,14 @@ def LoadGalaxies(tgalFile):
 
     print("Loading galaxy catalogue from " + tgalFile)
 
-    numb, ra, dec, dist, mgal = np.genfromtxt(tgalFile, usecols=(0, 1, 2, 3, 4), skip_header=1, unpack=True)  # ra, dec in degrees
+    # Load data
+    h5file = tables.open_file(tgalFile, mode="r")
+    tcat = Table(h5file.root.catalog.read()[['no_GLADE', 'RA', 'Dec', 'd_L', 'B_mag']])
+    h5file.close()
 
-    tcat = Table([ra, dec, dist, mgal], names=('RAJ2000', 'DEJ2000', 'Dist', 'SteMgal'))
+    # Rename column to match naming scheme
+    tcat.rename_columns(['RA', 'Dec', 'd_L', 'B_mag'], ['RAJ2000', 'DEJ2000', 'Dist', 'Bmag'])
+
     return tcat
 
 def LoadGalaxies_SteMgal(tgalFile):
@@ -1237,9 +1243,14 @@ def LoadGalaxies_SteMgal(tgalFile):
 
     print("Loading galaxy catalogue from " + tgalFile)
 
-    numb, ra, dec, dist, mgal = np.genfromtxt(tgalFile, usecols=(0, 1, 2, 3, 4), skip_header=1, unpack=True)  # ra, dec in degrees
+    # Load data
+    h5file = tables.open_file(tgalFile, mode="r")
+    tcat = Table(h5file.root.catalog.read()[['no_GLADE', 'RA', 'Dec', 'd_L', 'B_mag', 'mass']])
+    h5file.close()
 
-    tcat = Table([ra, dec, dist, mgal], names=('RAJ2000', 'DEJ2000', 'Dist', 'SteMgal'))
+    # Rename column to match naming scheme
+    tcat.rename_columns(['RA', 'Dec', 'd_L', 'B_mag', 'mass'], ['RAJ2000', 'DEJ2000', 'Dist', 'Bmag', 'SteMgal'])
+
     return tcat
 
 def CorrelateGalaxies_LVC(prob, distmu, distsigma, distnorm, cat, Info3D_available,MinimumProbCutForCatalogue):
