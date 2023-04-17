@@ -18,8 +18,6 @@ import datetime
 import os
 import json
 
-
-
 def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
     '''
     Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
@@ -40,14 +38,13 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
         fitsMap = fits.open(URL)
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]
-    else: 
+    else:
         targetType = 'GW_Pointing'
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap,filename)
+    prob, has3D = Check2Dor3D(fitsMap, filename)
 
-    
     print("===========================================================================================")
     PointingsFile = "False"
     galaxies = datasetDir + galcatname
@@ -71,7 +68,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
         print("Config parameters: ", cfgFile)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
+
         obspar = ObservationParameters()
         obspar.from_configfile(cfgFile)
 
@@ -112,7 +109,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
         print("Parameters: ", cfgFile)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
+
         obspar = ObservationParameters()
         obspar.from_configfile(cfgFile)
 
@@ -130,7 +127,8 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
             cat = LoadGalaxies(galaxies)
             RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName,
                          '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name)
-            PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name, filename)
+            PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_GWOptimisation.txt' % dirName,
+                             obspar.name, filename)
         else:
             FOLLOWUP = False
             print('No observations are scheduled')
@@ -144,13 +142,13 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
                  FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
                  Mangrove):
     '''
-    Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
+    Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.
     Args:
         URL: the url of the probability fits or  png map
-        date: the desired time for scheduling to start 
+        date: the desired time for scheduling to start
         datasetDir: Path to the directory containting the datset like the galaxy catalog
-        outDir: Path to the output directory where the schedules and plots will eb saved 
-        cfgFile: Path to the configuration file 
+        outDir: Path to the output directory where the schedules and plots will eb saved
+        cfgFile: Path to the configuration file
         Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
         All the rest of the arguments might be put in one obspar class and can be found in a configuration file
     '''
@@ -164,12 +162,12 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
         fitsMap = fits.open(URL)
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]
-    else: 
+    else:
         targetType = 'GW_Pointing'
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap,filename) 
+    prob, has3D = Check2Dor3D(fitsMap, filename)
 
     print("===========================================================================================")
     PointingsFile = "False"
@@ -178,12 +176,12 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
 
     obspar = ObservationParameters()
     obspar.from_args(name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
-                 HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
-                 MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
-                 Duration, MinDuration, UseGreytime, MinSlewing, online,
-                 MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
-                 FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
-                 Mangrove)
+                     HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
+                     MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
+                     Duration, MinDuration, UseGreytime, MinSlewing, online,
+                     MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
+                     FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
+                     Mangrove)
 
     if has3D:
 
@@ -201,7 +199,6 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
         print("Catalog: ", galaxies)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
 
         SuggestedPointings, cat = PGalinFoV(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
 
@@ -237,7 +234,6 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
         print("Catalog: ", galaxies)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
 
         SuggestedPointings, t0 = PGWinFoV(filename, ObservationTime, PointingsFile, obspar, dirName)
 
@@ -256,6 +252,5 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
             FOLLOWUP = False
             print('No observations are scheduled')
             return None
-
 
 
