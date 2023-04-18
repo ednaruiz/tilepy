@@ -12,7 +12,6 @@ from mocpy import MOC
 from scipy.stats import norm
 import time
 import os
-from gammapy.spectrum.models import TableModel, AbsorbedSpectralModel, PowerLaw
 from .ObservingTimes import ObtainSingleObservingTimes
 import matplotlib.pyplot as plt
 import numpy as np
