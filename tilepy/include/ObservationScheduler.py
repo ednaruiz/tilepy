@@ -4,7 +4,7 @@
 ############################################################################
 
 
-from .TilingDetermination import PGWinFoV, PGalinFoV, PGalinFoV_PixRegion
+from .TilingDetermination import PGWinFoV, PGalinFoV
 from .RankingObservationTimes import RankingTimes, RankingTimes_SkyMapInput_2D
 from .PointingPlotting import PointingPlotting
 from astropy.coordinates import SkyCoord
@@ -75,7 +75,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
         obspar = ObservationParameters()
         obspar.from_configfile(cfgFile)
 
-        SuggestedPointings, cat = PGalinFoV_PixRegion(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
+        SuggestedPointings, cat = PGalinFoV(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
 
         print(SuggestedPointings)
         print("===========================================================================================")
