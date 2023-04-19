@@ -420,8 +420,11 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                             visiGals2 = ModifyCatalogue(prob,visiGals2, obspar.FOV, sum_dP_dV,nside)
                             
                             mask, minz = FulfillsRequirement(visiGals2, obspar.max_zenith,obspar.FOV,obspar.FulFillReq_Percentage,UsePix=False)
-
-                            finalGals2 = visiGals2[mask]
+                            if obspar.UseGreytime:
+                                maskgrey=FulfillsRequirementGreyObservations(ObservationTime,visiGals2,obspar.Location, obspar.MoonSourceSeparation)
+                                finalGals2=visiGals2[mask&maskgrey]
+                            if not obspar.UseGreytime:
+                                finalGals2 = visiGals2[mask]
                             p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals2,False,visiGals2,tGals_aux2,sum_dP_dV, alreadysumipixarray2,nside, minz,obspar.max_zenith, obspar.FOV, counter,name,dirName,obspar.doplot)
 
                             RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals2['RAJ2000'][:1]))))
