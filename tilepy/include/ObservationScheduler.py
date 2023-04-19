@@ -20,7 +20,7 @@ import json
 
 
 
-def GetSchedule_confile(URL, date,datasetDir,outDir,cfgFile, Type):
+def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
     '''
     Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
     Args:
@@ -50,7 +50,7 @@ def GetSchedule_confile(URL, date,datasetDir,outDir,cfgFile, Type):
     
     print("===========================================================================================")
     PointingsFile = "False"
-    galaxies = datasetDir + "/GLADE.txt"
+    galaxies = datasetDir + galcatname
     #cfgFile = "./configs/FollowupParameters.ini"
 
     if has3D:
@@ -173,7 +173,7 @@ def GetSchedule_funcarg(URL, date,datasetDir,outDir, Type, name, Lat, Lon, Heigh
 
     print("===========================================================================================")
     PointingsFile = "False"
-    galaxies = datasetDir + "/GLADE.txt"
+    galaxies = datasetDir + galcatname
     #cfgFile = "./configs/FollowupParameters.ini"
 
     obspar = ObservationParameters()
