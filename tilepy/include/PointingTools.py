@@ -983,7 +983,7 @@ def ZenithAngleCut(prob, nside, time, MinProbCut,max_zenith,observatory, MoonSou
     pprob = prob
 
     mzenith = hp.ma(pprob)
-    maskzenith = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+    maskzenith = np.zeros(hp.nside2npix(nside), dtype=bool)
 
     pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     ra = np.rad2deg(pixel_phi)
@@ -1012,7 +1012,7 @@ def ZenithAngleCut(prob, nside, time, MinProbCut,max_zenith,observatory, MoonSou
         moonaltazs = get_moon(Time(time,scale='utc')).transform_to(AltAz(obstime=Time(time,scale='utc'),
                                                         location=observatory))
         separations = altaz_map.separation(moonaltazs)
-        mask_moonDistance = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+        mask_moonDistance = np.zeros(hp.nside2npix(nside), dtype=bool)
         mask_moonDistance[separations < MoonSourceSeparation * u.deg]=1
         mzenith = hp.ma(pprob)
         mzenith.mask = mask_moonDistance
@@ -2880,7 +2880,7 @@ def ZenithAngleCut_TwoTimes(prob, nside, time, time1, MinProbCut, max_zenith, ob
     pprob = prob
 
     mzenith = hp.ma(pprob)
-    maskzenith = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+    maskzenith = np.zeros(hp.nside2npix(nside), dtype=bool)
 
     pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     ra = np.rad2deg(pixel_phi)
@@ -2904,7 +2904,7 @@ def ZenithAngleCut_TwoTimes(prob, nside, time, time1, MinProbCut, max_zenith, ob
     ppprob = pprob
 
     mzenith = hp.ma(ppprob)
-    maskzenith = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+    maskzenith = np.zeros(hp.nside2npix(nside), dtype=bool)
 
     pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     ra = np.rad2deg(pixel_phi)
