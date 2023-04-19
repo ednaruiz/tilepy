@@ -167,7 +167,7 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
                 #Try Round 2
                 #print('The minimum probability cut being', MinProbCut * 100, '% is, unfortunately, not reached.')
                 yprob1=highres
-                P_GW, TC, pixlist1,ipixlistHR1 = ComputeProbability2D(prob,yprob1,radecs, nside,obspar.ReducedNside,obspar.HRnside,obspar.PercentCoverage, ObservationTime,obspar.Location, obspar.max_zenith,obspar.FOV, name, pixlist1,ipixlistHR1, counter,dirName,obspar.UseGreytime,obspar.doplot)
+                P_GW, TC, pixlist1,ipixlistHR1 = ComputeProbability2D(prob,yprob1,radecs,obspar.ReducedNside,obspar.HRnside,obspar.MinProbCut,ObservationTime,obspar.Location,obspar.max_zenith,obspar.FOV,name,pixlist1,ipixlistHR1,counter,dirName,obspar.UseGreytime,obspar.doplot)
                 if ((P_GW <= obspar.MinProbCut)):
                   print('Fail')
                 else:
@@ -341,8 +341,11 @@ def PGalinFoV_NObs(filename,ObservationTime0,PointingFile,galFile, parameters,di
                           visiGals2 = ModifyCatalogue(prob,visiGals2, obspar.FOV, sum_dP_dV,nside)
                           
                           mask, minz = FulfillsRequirement(visiGals2, obspar.max_zenith,obspar.FOV,obspar.FulFillReq_Percentage,UsePix=False)
-  
-                          finalGals2 = visiGals2[mask]
+                          if obspar.UseGreytime:
+                            maskgrey=FulfillsRequirementGreyObservations(ObservationTime,visiGals2,obspar.Location, obspar.MoonSourceSeparation)
+                            finalGals2=visiGals2[mask&maskgrey]
+                          if not obspar.UseGreytime:
+                            finalGals2 = visiGals2[mask]
                           p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals2,False,visiGals2,tGals_aux2,sum_dP_dV, alreadysumipixarray2,nside, minz,obspar.max_zenith, obspar.FOV, counter,name,dirName,obspar.doplot)
   
                           RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals2['RAJ2000'][:1]))))

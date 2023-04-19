@@ -592,12 +592,6 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, paramete
 
                 if (visiPix['PIXFOVPROB'][:1] > obspar.MinProbCut):
                     n = n + 1
-                    # final galaxies within the FoV
-
-                    # print("\n=================================")
-                    # print("TARGET COORDINATES AND DETAILS...")
-                    # print("=================================")
-                    # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                     p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob, ObservationTime, obspar.Location,
                                                                                                visiPix, True, visiGals,
                                                                                                tGals_aux, sum_dP_dV,
