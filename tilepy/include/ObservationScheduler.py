@@ -63,7 +63,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
             os.makedirs(dirName)
 
         print("===========================================================================================")
-        print("Starting the LST GW - 3D pointing calculation with the following parameters\n")
+        print("Starting the GW - 3D pointing calculation with the following parameters\n")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", PointingsFile)
@@ -104,7 +104,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
             os.makedirs(dirName)
 
         print("===========================================================================================")
-        print("Starting the LST GW - 2D pointing calculation with the following parameters\n")
+        print("Starting the GW - 2D pointing calculation with the following parameters\n")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", PointingsFile)
@@ -136,7 +136,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
             print('No observations are scheduled')
 
 
-def GetSchedule_funcarg(URL, date,datasetDir,outDir, Type, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
+def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
                  HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
                  MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                  Duration, MinDuration, UseGreytime, MinSlewing, online,

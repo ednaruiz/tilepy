@@ -88,20 +88,20 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
             if ObsBool:
                 # Round 1
                 P_GW,TC,pixlist,ipixlistHR = ComputeProbability2D(prob,highres,radecs,obspar.ReducedNside,obspar.HRnside,obspar.MinProbCut,ObservationTime,obspar.Location,obspar.max_zenith,obspar.FOV,name,pixlist,ipixlistHR,counter,dirName,obspar.UseGreytime,obspar.doplot)
-                if ((P_GW <= obspar.MinProbCut)and obspar.SecondRound):
+                if ((P_GW <= obspar.MinProbCut) and obspar.SecondRound):
                     #Try Round 2
                     #print('The minimum probability cut being', MinProbCut * 100, '% is, unfortunately, not reached.')
                     yprob1=highres
-                    P_GW, TC, pixlist1,ipixlistHR1 = ComputeProbability2D(prob,yprob1,radecs, nside,obspar.ReducedNside,obspar.HRnside,obspar.PercentCoverage, ObservationTime,obspar.Location, obspar.max_zenith,FOV, name, pixlist1,ipixlistHR1, counter,dirName,obspar.UseGreytime,obspar.doplot)
+                    P_GW, TC, pixlist1,ipixlistHR1 = ComputeProbability2D(prob,yprob1,radecs,obspar.ReducedNside,obspar.HRnside,obspar.MinProbCut,ObservationTime,obspar.Location,obspar.max_zenith,obspar.FOV,name,pixlist1,ipixlistHR1,counter,dirName,obspar.UseGreytime,obspar.doplot)
                     if ((P_GW <= obspar.MinProbCut)):
                         print('Fail')
                     else:
                         Round.append(2)
-                        P_GWarray.append(P_GW)
+                        P_GWarray.append(np.float('{:1.4f}'.format(np.float(P_GW))))
                         RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
                         DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
                         ObservationTimearray.append(str(ObservationTime).split('.')[0])
-                        counter = counter + 1
+                        counter=counter+1
                 elif(P_GW >= obspar.MinProbCut):
                     Round.append(1)
                     P_GWarray.append(np.float('{:1.4f}'.format(np.float(P_GW))))
