@@ -11,7 +11,75 @@ from gammapy.cube import make_map_exposure_true_energy, make_map_background_irf
 from gammapy.spectrum.models import Absorption, PowerLaw
 import matplotlib.pyplot as plt
 from .PointingTools import GRB
+from gammapy.spectrum.models import TableModel, AbsorbedSpectralModel, PowerLaw
 
+
+class GRB(object):
+    """
+        Class to store GRB properties.
+
+        Simulations are done with appropriate functions
+        """
+
+    def __init__(self, filepath=None,
+                 name=None,
+                 z=None,
+                 time_interval=None,
+                 spectral_model=None,
+                 energy_interval=None):
+        # Path of the GRB properties/model
+        self.filepath = filepath
+
+        # GRB properties
+        self.name = name
+        self.z = z
+
+        # Time intervals
+        self.time_interval = time_interval
+        # Gammapy models
+        self.spectral_model = spectral_model
+        self.energy_interval = energy_interval
+
+    def __str__(self):
+        txt = ''
+        txt += 'GRB summary\n'.format()
+        txt += 'Name: {}\n'.format(self.name)
+        txt += 'Redshift: {}\n'.format(self.z)
+        txt += 'Times:\n'.format(self.time_interval)
+        return txt
+
+    @classmethod
+    def from_fitsfile(cls, filepath, absorption):
+        data = fits.open(filepath)
+        energy_interval = data[1].data.field(0) * u.GeV
+        time_interval = data[2].data.field(0) * u.s
+        flux = data[3].data
+        z = 0.0  # No EBL correction for the moment, needs to be added
+        name = filepath.split('/')[-1].split('.')[0]
+        spectral_model = []
+        for interval in range(0, len(time_interval)):
+            flux_t = flux[interval] * u.Unit('1 / (cm2 s GeV)')
+            newflux = flux_t  # Use Factor 1000000.0  if needed
+            # print(np.log(energy_interval.value))
+            # print(np.log(flux_t.value))
+            table_model = TableModel(energy=energy_interval, values=newflux, values_scale='log')
+            table_model.plot(energy_range=(0.001, 10) * u.TeV)
+            # name='/Users/mseglar/Documents/GitHub/CTASimulationsGW/run0017_MergerID000132_skymap/PGalonFoVanalysis_3d/plot'+str(interval)
+            # plt.show()
+            # plt.savefig('SpectralModel.png')
+            # spectral_model.append(SpectralModel(spectral_model=table_model))
+            spectral_model.append(AbsorbedSpectralModel(spectral_model=table_model, absorption=absorption, parameter=z,
+                                                        parameter_name='redshift'))
+            # spectral_model.append(PowerLaw(index=2.2, amplitude="1e-11 cm-2 s-1 TeV-1", reference="1 TeV"))
+
+        return cls(
+            filepath=filepath,
+            name=name,
+            z=z,
+            time_interval=time_interval,
+            spectral_model=spectral_model,
+            energy_interval=energy_interval,
+        )
 
 
 def PointingSimulation(sky_model,axis,geom,pointing,livetime,offset,irfs):
