@@ -92,7 +92,7 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
                     #Try Round 2
                     #print('The minimum probability cut being', MinProbCut * 100, '% is, unfortunately, not reached.')
                     yprob1=highres
-                    P_GW, TC, pixlist1,ipixlistHR1 = ComputeProbability2D(prob,yprob1,radecs,obspar.ReducedNside,obspar.HRnside,obspar.MinProbCut,ObservationTime,obspar.Location,obspar.max_zenith,obspar.FOV,name,pixlist1,ipixlistHR1,counter,dirName,obspar.UseGreytime,obspar.doplot)
+                    P_GW, TC, pixlist1,ipixlistHR1 = ComputeProbability2D(prob,yprob1,radecs,obspar.ReducedNside,obspar.HRnside,obspar.MinProbCut, ObservationTime,obspar.Location, obspar.max_zenith,obspar.FOV, name, pixlist1,ipixlistHR1, counter,dirName,obspar.UseGreytime,obspar.doplot)
                     if ((P_GW <= obspar.MinProbCut)):
                         print('Fail')
                     else:
@@ -420,6 +420,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                             visiGals2 = ModifyCatalogue(prob,visiGals2, obspar.FOV, sum_dP_dV,nside)
 
                             mask, minz = FulfillsRequirement(visiGals2, obspar.max_zenith,obspar.FOV,obspar.FulFillReq_Percentage,UsePix=False)
+
                             if obspar.UseGreytime:
                                 maskgrey=FulfillsRequirementGreyObservations(ObservationTime,visiGals2,obspar.Location, obspar.MoonSourceSeparation)
                                 finalGals2=visiGals2[mask&maskgrey]
@@ -592,6 +593,12 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, paramete
 
                 if (visiPix['PIXFOVPROB'][:1] > obspar.MinProbCut):
                     n = n + 1
+                    # final galaxies within the FoV
+
+                    # print("\n=================================")
+                    # print("TARGET COORDINATES AND DETAILS...")
+                    # print("=================================")
+                    # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                     p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob, ObservationTime, obspar.Location,
                                                                                                visiPix, True, visiGals,
                                                                                                tGals_aux, sum_dP_dV,
@@ -770,7 +777,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     UseObs = SelectObservatory_fromHotspot(filename)
 
     #ID retrieved from the filename
-    ID = filename.split('/')[-1].split('.')[1]
+    ID = filename.split('/')[-1].split('.')[0]
 
     # zenith=InputChar['Zenith']
 
@@ -832,7 +839,20 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     print()
 
     print('Loading map from ', filename)
-    tprob, distmu, distsigma, distnorm  = LoadHealpixUNIQMap(filename)
+    #tprob, distmu, distsigma, distnorm  = LoadHealpixUNIQMap(filename)
+   
+    # Get the skymap as an ordered dict
+    import ligo.skymap.io.fits as lf
+    skymap_OD = lf.read_sky_map(filename)
+    
+    #Get the main parameters
+    tprob = skymap_OD[0]
+    has3D = False
+    print('.fits file only has 2D information')
+    #distmu = skymap_OD[1]['distmean']
+    #distsigma = skymap_OD[1]['diststd']
+    #distnorm = skymap_OD[1]['diststd']
+
     prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
 
     nside = obspar.ReducedNside
@@ -844,12 +864,12 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     has3D = True
 
-    if (len(distnorm) == 0):
-        print("Found a generic map without 3D information")
-        # flag the event for special treatment
-        has3D = False
-    else:
-        print("Found a 3D reconstruction")
+    #if (len(distnorm) == 0):
+    #    print("Found a generic map without 3D information")
+    #    # flag the event for special treatment
+    #    has3D = False
+    #else:
+    #    print("Found a 3D reconstruction")
 
     # print('----------   NEW FOLLOW-UP ATTEMPT   ----------')
 

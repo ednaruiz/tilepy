@@ -252,5 +252,3 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
             FOLLOWUP = False
             print('No observations are scheduled')
             return None
-
-
