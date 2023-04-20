@@ -12,7 +12,6 @@ from mocpy import MOC
 from scipy.stats import norm
 import time
 import os
-from gammapy.spectrum.models import TableModel, AbsorbedSpectralModel, PowerLaw
 from .ObservingTimes import ObtainSingleObservingTimes
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,6 +30,7 @@ import numpy.ma as ma
 from six.moves import configparser
 import six
 from gdpyc import GasMap, DustMap
+from .gwobserve import Sensitivity, GRB
 if six.PY2:
   ConfigParser = configparser.SafeConfigParser
 else:
@@ -635,9 +635,9 @@ def get_lvk_uniq_maps(sky_map, Order, map_names='all'):
     
     un_inds = sky_map['UNIQ']
     
-    order = (np.log2(un_inds / 4).astype(np.int) /
-             2).astype(np.int)
-    inds = (un_inds - 4 * (np.power(4, order))).astype(np.int)
+    order = (np.log2(un_inds / 4).astype(int) /
+             2).astype(int)
+    inds = (un_inds - 4 * (np.power(4, order))).astype(int)
     
     if Order == 'max':
         Order = np.max(order)
@@ -685,12 +685,12 @@ def get_lvk_uniq_maps(sky_map, Order, map_names='all'):
     return maps
     
 def uniq2order_ind(uniq):
-    order = (np.log2(uniq / 4).astype(np.int) / 2).astype(np.int)
-    inds = (uniq - 4 * (np.power(4, order))).astype(np.int)
+    order = (np.log2(uniq / 4).astype(int) / 2).astype(int)
+    inds = (uniq - 4 * (np.power(4, order))).astype(int)
     return order, inds
 
 def order_inds2uniq(order, inds):
-    uniq = 4 * (np.power(4, order)).astype(np.int) + inds
+    uniq = 4 * (np.power(4, order)).astype(int) + inds
     return uniq
 
 
@@ -724,7 +724,7 @@ def Check2Dor3D(fitsfile,filename):
     if InsidePlane:
         has3D = False
 
-    if tdistmean > 300:
+    if tdistmean > 150:
         has3D = False
 
     return prob, has3D
@@ -983,7 +983,7 @@ def ZenithAngleCut(prob, nside, time, MinProbCut,max_zenith,observatory, MoonSou
     pprob = prob
 
     mzenith = hp.ma(pprob)
-    maskzenith = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+    maskzenith = np.zeros(hp.nside2npix(nside), dtype=bool)
 
     pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     ra = np.rad2deg(pixel_phi)
@@ -1012,7 +1012,7 @@ def ZenithAngleCut(prob, nside, time, MinProbCut,max_zenith,observatory, MoonSou
         moonaltazs = get_moon(Time(time,scale='utc')).transform_to(AltAz(obstime=Time(time,scale='utc'),
                                                         location=observatory))
         separations = altaz_map.separation(moonaltazs)
-        mask_moonDistance = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+        mask_moonDistance = np.zeros(hp.nside2npix(nside), dtype=bool)
         mask_moonDistance[separations < MoonSourceSeparation * u.deg]=1
         mzenith = hp.ma(pprob)
         mzenith.mask = mask_moonDistance
@@ -2609,7 +2609,7 @@ def TableImportCTA_SetOfTimes(ttimeFile):
 def TableImportCTA_Time(ttimeFile):
     run, MergerID, time1, time2, MeanAlt, Observatory = np.genfromtxt(ttimeFile, usecols=(0, 1, 2, 3, 4, 5),
                                                                       skip_header=1, unpack=True, dtype='str')
-    MeanAlt = MeanAlt.astype(np.int)
+    MeanAlt = MeanAlt.astype(int)
     time = []
     for i in range(len(time1)):
         time.append((time1[i] + ' ' + time2[i]).split('"')[1])
@@ -2681,10 +2681,9 @@ def IsSourceInside(Pointings, Sources, FOV, nside):
     return Found, Npoiting
 
 
-def ProduceSummaryFile(InputList, InputObservationList, allPossiblePoint, foundIn, j, typeSimu, totalProb, datasetDir,
+def ProduceSummaryFileOld(Found, InputList, InputObservationList, allPossiblePoint, foundIn, j, typeSimu, totalProb, datasetDir,
                        outDir, name):
-    # print(InputList['run'][j])
-    # print(InputList['MergerID'][j].split('r')[-1])
+
     filepath = datasetDir + '/GammaCatalogV2.0/' + str(InputList['run'][j]) + '_' + str(
         InputList['MergerID'][j].split('r')[-1]) + ".fits"
     fitsfile = fits.open(filepath)
@@ -2692,6 +2691,7 @@ def ProduceSummaryFile(InputList, InputObservationList, allPossiblePoint, foundI
     dirNameFile = outDir + '/SummaryFile'
     if not os.path.exists(dirNameFile):
         os.makedirs(dirNameFile)
+   
     # Obtain the luminosity
     if foundIn == -1:
         outfilename = outDir + '/SummaryFile/' + name + '_SimuS' + typeSimu + str("{:03d}".format(j)) + '.txt'
@@ -2722,6 +2722,94 @@ def ProduceSummaryFile(InputList, InputObservationList, allPossiblePoint, foundI
             foundFirst) + ' ' + str(foundTimes) + ' ' + str(totalProb) + ' ' + 'True' + '\n')
 
 
+def FillSummary(outfilename, ID, doneObservations,totalPoswindow, foundFirst,nP,totalProb, ObsInfo):
+        f = open(outfilename, 'w')
+        f.write(
+            'ID' + ' '  + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
+        f.write(str(ID) + ' ' + str(doneObservations) + ' ' + str(totalPoswindow) + ' ' + str(
+            foundFirst) + ' ' + str(nP) + ' ' + str(totalProb) + ' ' + str(ObsInfo) +  '\n')
+
+
+def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, typeSimu, datasetDir,outDir):
+
+
+    print(SuggestedPointings)
+    # Where to save results
+    dirNameFile = outDir + '/SummaryFile/'
+    print(dirNameFile)
+    if not os.path.exists(dirNameFile):
+        os.makedirs(dirNameFile)
+
+    dirNameSch = outDir + '/ScheduledObs'
+    if not os.path.exists(dirNameSch):
+        os.makedirs(dirNameSch)
+
+    dirNameSchCommas = outDir + '/ScheduledObsCommas'
+    if not os.path.exists(dirNameSchCommas):
+        os.makedirs(dirNameSchCommas)
+   
+    #grbFilename = datasetDir +'GRB-GW_TeV_catO5/catO5_'+ str(ID) + '.fits'
+    #fitsfile = fits.open(grbFilename)
+    
+    # Interesting parameters f
+    #luminosity = fitsfile[0].header['EISO']
+    
+    # Is the source inside?
+    maskClean = (SuggestedPointings['ObsInfo'] == 'True')
+    SuggestedPointingsC = SuggestedPointings[maskClean]
+    SuggestedPointingsC.remove_column('ObsInfo')
+    
+    Pointings = SkyCoord(SuggestedPointingsC['RA[deg]'], SuggestedPointingsC['DEC[deg]'], frame='fk5',
+                        unit=(u.deg, u.deg))
+
+    totalPGW = np.float('{:1.4f}'.format(np.float(sum(SuggestedPointingsC['PGW']))))
+
+    # Check if the source is covered by the scheduled pointings
+    Found, nP = IsSourceInside(Pointings, Source, obspar.FOV, obspar.ReducedNside)
+    foundFirst = -1
+    if len(nP) == 0: 
+        nP=0
+    if 'True' in SuggestedPointings['ObsInfo'] and Found == True: 
+        print('Found in scheduled observation:', nP)
+        
+        if type(nP) != int:
+            FoundFirst= nP[0]
+            #nP = len(nP)
+        print(SuggestedPointingsC[nP])
+        print()
+        
+        #print('Plotting the observations')
+        #PointingPlottingGWCTA(GWFile, name, outDir, pointingsFileC, obspar.FOV, InputTimeList['Observatory'][ID])
+
+        # --- Writting down the results ---
+        pointingsFileC = '%s/%s_cov.txt' % (dirNameSch, ID)
+        ascii.write(SuggestedPointingsC, pointingsFileC, overwrite=True, fast_writer=False)
+        
+        pointingsFileCommas = '%s/%s_cov.txt' % (dirNameSchCommas, ID)
+        ascii.write(SuggestedPointingsC, pointingsFileCommas, format='csv', overwrite=True, fast_writer=False)
+        
+        outfilename = dirNameFile + str(ID) + '_SimuSF_' + typeSimu + '.txt'
+        FillSummary(outfilename, ID, len(SuggestedPointingsC),totalPoswindow,FoundFirst, nP, np.sum(SuggestedPointings['PGW']),str(2))
+
+    if 'True' in SuggestedPointings['ObsInfo'] and Found == False:
+        print('Source not covered')
+        # --- Writting down the results ---
+        pointingsFileC = '%s/%s_NOTcov.txt' % (dirNameSch, ID)
+        ascii.write(SuggestedPointingsC, pointingsFileC, overwrite=True, fast_writer=False)
+        
+        pointingsFileCommas = '%s/%s_NOTcov.txt' % (dirNameSchCommas, ID)
+        ascii.write(SuggestedPointingsC, pointingsFileCommas, format='csv', overwrite=True, fast_writer=False)
+        
+        outfilename = dirNameFile + str(ID) + '_SimuS_' + typeSimu + '.txt'
+        FillSummary(outfilename, ID, len(SuggestedPointingsC),totalPoswindow,foundFirst,nP, np.sum(SuggestedPointings['PGW']),str(1))
+
+    if 'True' not in SuggestedPointings['ObsInfo']:
+        print('No observations are scheduled, lets write it down')
+        # --- Writting down the results ---
+        totalPGW = 0
+        outfilename = dirNameFile + str(ID) + '_Simu_' + typeSimu + '.txt'
+        FillSummary(outfilename,ID, 0,totalPoswindow,foundFirst,nP, totalPGW,str(0))
+        
 def ReadSummaryFile(summaryFile):
     print('Note that this function needs to be adapted to the output')
     nP, Found = np.genfromtxt(summaryFile, usecols=(8, 9), skip_header=1, unpack=True, dtype='str')
@@ -2791,75 +2879,6 @@ class NextWindowTools:
             time = Tools.PreviousMoonset(time, obsSite)
         return time
 
-
-class GRB(object):
-    """
-        Class to store GRB properties.
-
-        Simulations are done with appropriate functions
-        """
-
-    def __init__(self, filepath=None,
-                 name=None,
-                 z=None,
-                 time_interval=None,
-                 spectral_model=None,
-                 energy_interval=None):
-        # Path of the GRB properties/model
-        self.filepath = filepath
-
-        # GRB properties
-        self.name = name
-        self.z = z
-
-        # Time intervals
-        self.time_interval = time_interval
-        # Gammapy models
-        self.spectral_model = spectral_model
-        self.energy_interval = energy_interval
-
-    def __str__(self):
-        txt = ''
-        txt += 'GRB summary\n'.format()
-        txt += 'Name: {}\n'.format(self.name)
-        txt += 'Redshift: {}\n'.format(self.z)
-        txt += 'Times:\n'.format(self.time_interval)
-        return txt
-
-    @classmethod
-    def from_fitsfile(cls, filepath, absorption):
-        data = fits.open(filepath)
-        energy_interval = data[1].data.field(0) * u.GeV
-        time_interval = data[2].data.field(0) * u.s
-        flux = data[3].data
-        z = 0.0  # No EBL correction for the moment, needs to be added
-        name = filepath.split('/')[-1].split('.')[0]
-        spectral_model = []
-        for interval in range(0, len(time_interval)):
-            flux_t = flux[interval] * u.Unit('1 / (cm2 s GeV)')
-            newflux = flux_t  # Use Factor 1000000.0  if needed
-            # print(np.log(energy_interval.value))
-            # print(np.log(flux_t.value))
-            table_model = TableModel(energy=energy_interval, values=newflux, values_scale='log')
-            table_model.plot(energy_range=(0.001, 10) * u.TeV)
-            # name='/Users/mseglar/Documents/GitHub/CTASimulationsGW/run0017_MergerID000132_skymap/PGalonFoVanalysis_3d/plot'+str(interval)
-            # plt.show()
-            # plt.savefig('SpectralModel.png')
-            # spectral_model.append(SpectralModel(spectral_model=table_model))
-            spectral_model.append(AbsorbedSpectralModel(spectral_model=table_model, absorption=absorption, parameter=z,
-                                                        parameter_name='redshift'))
-            # spectral_model.append(PowerLaw(index=2.2, amplitude="1e-11 cm-2 s-1 TeV-1", reference="1 TeV"))
-
-        return cls(
-            filepath=filepath,
-            name=name,
-            z=z,
-            time_interval=time_interval,
-            spectral_model=spectral_model,
-            energy_interval=energy_interval,
-        )
-
-
 def ZenithAngleCut_TwoTimes(prob, nside, time, time1, MinProbCut, max_zenith, observatory):
     '''
     Mask in the pixels with zenith angle larger than max_zenith
@@ -2870,7 +2889,7 @@ def ZenithAngleCut_TwoTimes(prob, nside, time, time1, MinProbCut, max_zenith, ob
     pprob = prob
 
     mzenith = hp.ma(pprob)
-    maskzenith = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+    maskzenith = np.zeros(hp.nside2npix(nside), dtype=bool)
 
     pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     ra = np.rad2deg(pixel_phi)
@@ -2894,7 +2913,7 @@ def ZenithAngleCut_TwoTimes(prob, nside, time, time1, MinProbCut, max_zenith, ob
     ppprob = pprob
 
     mzenith = hp.ma(ppprob)
-    maskzenith = np.zeros(hp.nside2npix(nside), dtype=np.bool)
+    maskzenith = np.zeros(hp.nside2npix(nside), dtype=bool)
 
     pixel_theta, pixel_phi = hp.pix2ang(nside, np.arange(hp.nside2npix(nside)))
     ra = np.rad2deg(pixel_phi)
@@ -2931,6 +2950,8 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
     frame = co.AltAz(obstime=time, location=obspar.Location)
     thisaltaz = radecs.transform_to(frame)
     pix_alt1 = thisaltaz.alt.value
+
+    grbFilename = datasetDir +'GRB-GW_TeV_catO5/catO5_'+  ID + '.fits'
 
     if usegreytime:
         moonaltazs = get_moon(Time(time,scale='utc')).transform_to(AltAz(obstime=Time(time), location=obspar.Location))
@@ -2983,66 +3004,92 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
     sortcat = maskcat_pix[np.flipud(np.argsort(maskcat_pix['PIXFOVPROB']))]
     ObsCase = 'SourceOutFoV'  # Default case, the source is not in CTA FoV
 
-    # Fill column for time that one needs to observe them to get 5sigma for the highest of the list
-
+    # Fill a the column EXPOSURE column. Corresponds to the time that one needs to observe to get 5sigma for the highest of the list
+    # Three cases depending on the IRFs that should be used (60,40,20)
+    grbSensPath = '/grbsens_output_v3_Sep_2022/alpha_configuration/'
     if (np.any(sortcat['ZENITH_INI'] > 55)):
-        ObsCase, texp60 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,
-                                                     datasetDir, zenith=60)
-        # TODO: Here we should change that by from gwobserve.py import observe_grb and the corrent grb sens file
-        # time = observe_grb(grb_file_path, sensitivity: Sensitivity, start_time: float = 0, max_time=None, target_precision=10, _max_loops=1000,)
-        
-        print("ObsCase60", ObsCase,'time =', texp60)
-        # Cat60 = sortcat[sortcat['ZENITH_INI'] >55]
-        # print("ObsCase60", ObsCase)
-        sortcat['EXPOSURE'][sortcat['ZENITH_INI'] > 55] = texp60
-        frame = co.AltAz(obstime=time + datetime.timedelta(seconds=texp60), location=obspar.Location)
-        catCoord60 = co.SkyCoord(sortcat['PIXRA'][sortcat['ZENITH_INI'] > 55],
-                                 sortcat['PIXDEC'][sortcat['ZENITH_INI'] > 55], frame='fk5', unit=(u.deg, u.deg))
-        thisaltaz60 = catCoord60.transform_to(frame)
-        pix_zen60 = 90 - thisaltaz60.alt.value
-        sortcat['ZENITH_END'][sortcat['ZENITH_INI'] > 55] = pix_zen60
+        #ObsCase, texp60 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,datasetDir, zenith=60)  
+        #if observatory.name == "North":
+        grbSensFile = datasetDir + grbSensPath + "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"  # "sensitivity-5sigma_irf-North_z20_0.5.txt"
+        grb_result = GetExposureForDetection(grbSensFile,grbFilename,DelayObs)  
+        print(grb_result)
+        if(grb_result['obs_time']==-1): 
+            ObsCase = 'TimeNotEnough'
+            sortcat['EXPOSURE'][sortcat['ZENITH_INI'] > 55] = False
+        else: 
+            texp60 = grb_result['obs_time']
+            print("ObsCase60", ObsCase,'time =', texp60)
+            # Cat60 = sortcat[sortcat['ZENITH_INI'] >55]
+            # print("ObsCase60", ObsCase)
+            sortcat['EXPOSURE'][sortcat['ZENITH_INI'] > 55] = texp60
+            frame = co.AltAz(obstime=time + datetime.timedelta(seconds=texp60), location=obspar.Location)
+            catCoord60 = co.SkyCoord(sortcat['PIXRA'][sortcat['ZENITH_INI'] > 55],
+                                    sortcat['PIXDEC'][sortcat['ZENITH_INI'] > 55], frame='fk5', unit=(u.deg, u.deg))
+            thisaltaz60 = catCoord60.transform_to(frame)
+            pix_zen60 = 90 - thisaltaz60.alt.value
+            sortcat['ZENITH_END'][sortcat['ZENITH_INI'] > 55] = pix_zen60
 
     mask1 = sortcat['ZENITH_INI'] >= 30
     mask2 = sortcat['ZENITH_INI'] <= 55
 
     if (sortcat['ZENITH_INI'][mask1 & mask2].any()):
-        ObsCase, texp40 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,datasetDir, zenith=40)
-        print("ObsCase40", ObsCase, 'time=', texp40)
-        sortcat['EXPOSURE'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = texp40
-        # Cat40 = sortcat[(30 < sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] < 55)]
-        # print(Cat40)
-        frame = co.AltAz(obstime=time + datetime.timedelta(seconds=texp40), location=obspar.Location)
-        catCoord40 = co.SkyCoord(sortcat['PIXRA'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)],
-                                 sortcat['PIXDEC'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)],
-                                 frame='fk5', unit=(u.deg, u.deg))
-        # print("radecs",radecs)
-        thisaltaz40 = catCoord40.transform_to(frame)
-        pix_zen40 = 90 - thisaltaz40.alt.value
-        sortcat["ZENITH_END"][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = pix_zen40
+        #ObsCase, texp40 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,datasetDir, zenith=40)
+        
+        grbSensFile = datasetDir + grbSensPath + "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"  # "sensitivity-5sigma_irf-North_z20_0.5.txt"
+        grb_result = GetExposureForDetection(grbSensFile,grbFilename,DelayObs)           
+        print(grb_result)
+        if(grb_result['obs_time']==-1): 
+            ObsCase = 'TimeNotEnough'
+            sortcat['EXPOSURE'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = False
+        else: 
+            texp40 = grb_result['obs_time']
+            print("ObsCase40", ObsCase, 'time=', texp40)
+            sortcat['EXPOSURE'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = texp40
+            # Cat40 = sortcat[(30 < sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] < 55)]
+            # print(Cat40)
+            frame = co.AltAz(obstime=time + datetime.timedelta(seconds=texp40), location=obspar.Location)
+            catCoord40 = co.SkyCoord(sortcat['PIXRA'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)],
+                                    sortcat['PIXDEC'][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)],
+                                    frame='fk5', unit=(u.deg, u.deg))
+            # print("radecs",radecs)
+            thisaltaz40 = catCoord40.transform_to(frame)
+            pix_zen40 = 90 - thisaltaz40.alt.value
+            sortcat["ZENITH_END"][(30 <= sortcat['ZENITH_INI']) & (sortcat['ZENITH_INI'] <= 55)] = pix_zen40
 
     if (np.any(sortcat['ZENITH_INI'] < 30)):
-        ObsCase, texp20 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar, datasetDir, zenith=20)
-        print("ObsCase20", ObsCase, 'time=',texp20)
-        sortcat['EXPOSURE'][sortcat['ZENITH_INI'] < 30] = texp20
-        # Cat20 = sortcat[sortcat['ZENITH_INI'] < 30]
-        # print(Cat30)
-        # print("time + datetime.timedelta(seconds=texp20)",time + datetime.timedelta(seconds=texp20))
-        # print("observatory.Location",observatory.Location)
-        frame = co.AltAz(obstime=time + datetime.timedelta(seconds=texp20), location=obspar.Location)
-        catCoord20 = co.SkyCoord(sortcat['PIXRA'][sortcat['ZENITH_INI'] < 30],
-                                 sortcat['PIXDEC'][sortcat['ZENITH_INI'] < 30], frame='fk5', unit=(u.deg, u.deg))
-        thisaltaz20 = catCoord20.transform_to(frame)
-        pix_zen20 = 90 - thisaltaz20.alt.value
-        sortcat["ZENITH_END"][sortcat['ZENITH_INI'] < 30] = pix_zen20
+        #ObsCase, texp20 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar, datasetDir, zenith=20)
+        
+        grbSensFile = datasetDir + grbSensPath + "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"  # "sensitivity-5sigma_irf-North_z20_0.5.txt"
+        grb_result = GetExposureForDetection(grbSensFile,grbFilename,DelayObs)  
+        if(grb_result['obs_time']==-1): 
+            ObsCase = 'TimeNotEnough'
+            sortcat['EXPOSURE'][sortcat['ZENITH_INI'] < 30] = False
+        else: 
+            texp20 = grb_result['obs_time']
+            print("ObsCase20", ObsCase, 'time=',texp20)
+            sortcat['EXPOSURE'][sortcat['ZENITH_INI'] < 30] = texp20
+            # Cat20 = sortcat[sortcat['ZENITH_INI'] < 30]
+            # print(Cat30)
+            # print("time + datetime.timedelta(seconds=texp20)",time + datetime.timedelta(seconds=texp20))
+            # print("observatory.Location",observatory.Location)
+            frame = co.AltAz(obstime=time + datetime.timedelta(seconds=texp20), location=obspar.Location)
+            catCoord20 = co.SkyCoord(sortcat['PIXRA'][sortcat['ZENITH_INI'] < 30],
+                                    sortcat['PIXDEC'][sortcat['ZENITH_INI'] < 30], frame='fk5', unit=(u.deg, u.deg))
+            thisaltaz20 = catCoord20.transform_to(frame)
+            pix_zen20 = 90 - thisaltaz20.alt.value
+            sortcat["ZENITH_END"][sortcat['ZENITH_INI'] < 30] = pix_zen20
 
-    # Mask if texp is False due to the fact that no observation window is achieved.
-    # print('HERE', len(sortcat))
-    # print(sortcat['EXPOSURE'])
+    # Check how many false values there are in the array
+    #false_count = sum(not i for i in sortcat['EXPOSURE'])
+
+    #print("Number of False values:", false_count,'vs. the number of entries being', len(sortcat['EXPOSURE']))
+    # Mask the catalog from the entries that are actually not feaseable from exposure value
     if False in sortcat['EXPOSURE']:
-        maskExposure = [sortcat['EXPOSURE'] != False]
+        maskExposure = (sortcat['EXPOSURE'] != False)
+        print(maskExposure)
         sortcat = sortcat[maskExposure]
 
-    # Mask if it is not visible at the end of the window
+    # Mask if it is not visible at the end of the window 
     mask = np.isin(sortcat['ZENITH_END'], 66, invert=True)
     maskcat_zen = sortcat[mask]
     if (len(sortcat[mask]) == 0):
@@ -3051,6 +3098,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
         ObsExp = False
         ZenIni = False
         ZenEnd = False
+        print('Obscase',ObsCase)
     else:
         sortcat = maskcat_zen[np.flipud(np.argsort(maskcat_zen['PIXFOVPROB']))]
         targetCoord = co.SkyCoord(sortcat['PIXRA'][:1][0], sortcat['PIXDEC'][:1][0], frame='fk5', unit=(u.deg, u.deg))
@@ -3132,3 +3180,8 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
         # plt.savefig('%s/Pointing-zencut_%g.png' % (path,counter))
 
     return P_GW, targetCoord, ObsExp, ZenIni, ZenEnd, ObsCase, ipixlist, ipixlistHR
+
+def GetExposureForDetection(grbSensFile,grbFilename,DelayObs):
+    sens = Sensitivity(grbSensFile, min_energy=0.3, max_energy=10000,)
+    grb = GRB(grbFilename)
+    return grb.observe(sensitivity=sens, start_time=DelayObs, target_precision=0.1)
