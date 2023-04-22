@@ -351,6 +351,8 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
     else:
         # tGals_aux = tGals
         ra, dec, tGals, AlreadyObservedPgw, AlreadyObservedPgal,alreadysumipixarray1 = SubstractPointings(PointingFile, tGals0,alreadysumipixarray1,sum_dP_dV,obspar.FOV,prob,nside)
+        #for second round
+        ra, dec, tGals, AlreadyObservedPgw, AlreadyObservedPgal,alreadysumipixarray2 = SubstractPointings(PointingFile, tGals0,alreadysumipixarray1,sum_dP_dV,obspar.FOV,prob,nside)
         MaxRuns = obspar.MaxRuns - len(ra)
         sumPGW = sum(AlreadyObservedPgw)
         sumPGAL = sum(AlreadyObservedPgal)
@@ -415,6 +417,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                         print('probability', finalGals['dp_dV_FOV'][:1])
                         visible, altaz, tGals_aux2 = VisibleAtTime(ObservationTime, tGals_aux2, obspar.max_zenith,obspar.Location)
                         if (visible):
+                            print("we are in round 2")
                             visiMask = altaz.alt.value > 90 - (obspar.max_zenith + obspar.FOV)
                             visiGals2 = tGals_aux2[visiMask]
                             visiGals2 = ModifyCatalogue(prob,visiGals2, obspar.FOV, sum_dP_dV,nside)
@@ -427,26 +430,42 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                             if not obspar.UseGreytime:
                                 finalGals2 = visiGals2[mask]
                             p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals2,False,visiGals2,tGals_aux2,sum_dP_dV, alreadysumipixarray2,nside, minz,obspar.max_zenith, obspar.FOV, counter,name,dirName,obspar.doplot)
-
+                            
                             RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals2['RAJ2000'][:1]))))
                             DECarray.append(np.float('{:3.4f}'.format(np.float(finalGals2['DEJ2000'][:1]))))
                             Round.append(2)
+                            P_GALarray.append(np.float('{:1.4f}'.format(p_gal)))
+                            P_GWarray.append(np.float('{:1.4f}'.format(p_gw)))
+                            ObservationTimearray.append(str(ObservationTime).split('.')[0])
+                            counter = counter + 1
 
+                        else: #NOTE: not sure if this should be added
+                            p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals,False, visiGals,tGals_aux, sum_dP_dV,alreadysumipixarray1,nside, minz,obspar.max_zenith, obspar.FOV, counter,name, dirName, obspar.doplot)
+                            RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals['RAJ2000'][:1]))))
+                            DECarray.append(np.float('{:3.4f}'.format(np.float(finalGals['DEJ2000'][:1]))))
+                            Round.append(1)
+                            P_GALarray.append(np.float('{:1.4f}'.format(p_gal)))
+                            P_GWarray.append(np.float('{:1.4f}'.format(p_gw)))
+                            ObservationTimearray.append(str(ObservationTime).split('.')[0])
+                            counter = counter + 1
                     else:
+                        print("We are in round 1")
                         #print("\n=================================")
                         #print("TARGET COORDINATES AND DETAILS...")
                         #print("=================================")
                         #print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                         p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals,False, visiGals,tGals_aux, sum_dP_dV,alreadysumipixarray1,nside, minz,obspar.max_zenith, obspar.FOV, counter,name, dirName, obspar.doplot)
+                        
                         RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals['RAJ2000'][:1]))))
                         DECarray.append(np.float('{:3.4f}'.format(np.float(finalGals['DEJ2000'][:1]))))
                         Round.append(1)
-                    P_GALarray.append(np.float('{:1.4f}'.format(p_gal)))
-                    P_GWarray.append(np.float('{:1.4f}'.format(p_gw)))
-                    ObservationTimearray.append(str(ObservationTime).split('.')[0])
-                    counter = counter + 1
-                    #ObservationTimearrayNamibia.append(Tools.UTCtoNamibia(ObservationTime))
-            
+
+                        P_GALarray.append(np.float('{:1.4f}'.format(p_gal)))
+                        P_GWarray.append(np.float('{:1.4f}'.format(p_gw)))
+                        ObservationTimearray.append(str(ObservationTime).split('.')[0])
+                        counter = counter + 1
+                        #ObservationTimearrayNamibia.append(Tools.UTCtoNamibia(ObservationTime))
+                
                 else:
                     #print("Optimal pointing position is: ")
                     #print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
@@ -461,8 +480,8 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
     SuggestedPointings = Table([ObservationTimearray,RAarray,DECarray,P_GWarray,P_GALarray,Round], names=['Observation Time UTC','RA[deg]','DEC[deg]','PGW','Pgal','Round'])
     return SuggestedPointings,cat
 
-def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, parameters,dirName):
-
+def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,dirName):
+#(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
     # Main parameters from config
 
     ###############################
@@ -589,7 +608,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, paramete
 
                 finalGals = visiGals[mask]
                 visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, prob, finalGals, obspar.FOV,
-                                             sum_dP_dV, nside, obspar.NewNside, minz,obspar.Location)
+                                             sum_dP_dV, nside, obspar.ReducedNside, minz,obspar.Location)
 
                 if (visiPix['PIXFOVPROB'][:1] > obspar.MinProbCut):
                     n = n + 1
