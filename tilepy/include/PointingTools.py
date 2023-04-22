@@ -2345,7 +2345,7 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 
     # iteration on chosen pixel to calculate the probability on their field of view using galaxies
     for l in range(0, len(cat_pix)):
-        dp_dV_FOV.append(PGalinFOV(prob, cat, cat_pix[l], FOV, totaldPdV, nside, UsePix=True))
+        dp_dV_FOV.append(ComputePGalinFOV(prob, cat, cat_pix[l], FOV, totaldPdV, nside, UsePix=True))
 
     cat_pix['PIXFOVPROB'] = dp_dV_FOV
 
