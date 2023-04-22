@@ -1352,14 +1352,12 @@ def CorrelateGalaxies_LVC_SteMass(prob, distmu, distsigma, distmean, disterr, di
     Gals = Gals[min_prob_cut]
 
     if(Info3D_available):
-
         Mgal1 =  Gals['SteMgal']
         Pgal_pos = Gals['dp_dV']
 
         Mgal1 = np.nan_to_num(Mgal1)
         Mgal = 10**(Mgal1)
         Pgal_pos = np.nan_to_num(Pgal_pos)
-
 
         Gmass = Mgal/(np.sum(Mgal))
         alpha = (Pgal_pos).sum()/(Pgal_pos*Gmass).sum()
