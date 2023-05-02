@@ -1,5 +1,6 @@
 import argparse
 import logging
+import os.path
 import time
 import numpy as np
 import pandas as pd
@@ -37,6 +38,7 @@ parser.add_argument("-sh", "--shuffle",
 parser.add_argument("-bs", "--bit-shuffle",
                     dest='bit_shuffle', action='store_true',
                     default=False, help="Allow bit shuffle for file compression")
+
 
 # Function to determine the best name for the galaxie
 def best_name_galaxie(x):
@@ -91,14 +93,75 @@ converter_columns_catalog = {'no_PGC': lambda x: str(x),
                              'dist_flag': flag_columns_converter,
                              'mass_flag': flag_columns_converter}
 
+# Define column name and format conversion for data format from cosmo hub
+cosmo_hub_converter_name_columns_catalog = {'glade_no': 'no_GLADE',
+                                            'pgc_no': 'no_PGC',
+                                            'gwgc_name': 'name_GWGC',
+                                            'hyperleda_name': 'name_HyperLEDA',
+                                            '2mass_name': 'name_2MASS',
+                                            'wisexscos': 'name_WISExSCOS',
+                                            'sdss_dr16q': 'name_SDSS_DR16Q',
+                                            'object_type_flag': 'object_type',
+                                            'ra': 'RA',
+                                            'dec': 'Dec',
+                                            'b': 'B_mag',
+                                            'b_err': 'B_mag_err',
+                                            'b_flag': 'B_mag_flag',
+                                            'b_abs': 'B_mag_abs',
+                                            'j': 'J_mag',
+                                            'j_err': 'J_mag_err',
+                                            'h': 'H_mag',
+                                            'h_err': 'H_mag_err',
+                                            'k': 'K_mag',
+                                            'k_err': 'K_mag_err',
+                                            'w1': 'W1_mag',
+                                            'w1_err': 'W1_mag_err',
+                                            'w2': 'W2_mag',
+                                            'w2_err': 'W2_mag_err',
+                                            'w1_flag': 'W1_mag_flag',
+                                            'b_j': 'B_J_mag',
+                                            'b_j_err': 'B_J_mag_err',
+                                            'z_helio': 'z_helio',
+                                            'z_cmb': 'z_cmb',
+                                            'z_flag': 'z_flag',
+                                            'v_err': 'v_err',
+                                            'z_err': 'z_err',
+                                            'd_l': 'd_L',
+                                            'd_l_err': 'd_L_err',
+                                            'dist_flag': 'dist_flag',
+                                            'm_star': 'mass',
+                                            'm_star_err': 'mass_err',
+                                            'm_star_flag': 'mass_flag',
+                                            'merger_rate': 'merger_rate',
+                                            'merger_rate_err': 'merger_rate_err'}
+cosmo_hub_converter_columns_catalog = {'no_PGC': lambda x: 'null' if np.isnan(x) else str(int(x)),
+                                       'name_GWGC': lambda x: str(x),
+                                       'name_HyperLEDA': lambda x: str(x),
+                                       'name_2MASS': lambda x: str(x),
+                                       'name_WISExSCOS': lambda x: str(x),
+                                       'name_SDSS_DR16Q': lambda x: str(x),
+                                       'object_type': lambda x: str(x),
+                                       'B_mag_flag': lambda x: -1 if np.isnan(x) else int(x),
+                                       'W1_mag_flag': lambda x: -1 if np.isnan(x) else int(x),
+                                       'z_flag': lambda x: -1 if np.isnan(x) else int(x),
+                                       'dist_flag': lambda x: -1 if np.isnan(x) else int(x),
+                                       'mass_flag': lambda x: -1 if np.isnan(x) else int(x)}
+
 # Load argument
 args = parser.parse_args()
 
 # Load catalog
 logging.info('Start loading catalog file')
 tstart = time.time()
-catalog = pd.read_csv(args.input, sep=' ', header=None,
-                      names=name_columns_catalog, dtype=dtype_columns_catalog, converters=converter_columns_catalog)
+_, extension = os.path.splitext(args.input)
+if extension == '.parquet':
+    catalog = pd.read_parquet(args.input, engine='fastparquet')
+    catalog = catalog.rename(cosmo_hub_converter_name_columns_catalog, axis=1)
+    for col in cosmo_hub_converter_columns_catalog.keys():
+        catalog[col] = catalog[col].apply(cosmo_hub_converter_columns_catalog[col])
+else:
+    catalog = pd.read_csv(args.input, sep=' ', header=None,
+                          names=name_columns_catalog, dtype=dtype_columns_catalog, converters=converter_columns_catalog)
 logging.info('Catalog files loaded with success in {0}s'.format(time.time() - tstart))
 
 # Compute filter
@@ -170,6 +233,7 @@ else:
         z_flag = tables.Int8Col()
         v_err = tables.Float32Col()
         z_err = tables.Float32Col()
+
 
     # Create filters for data compression
     if args.compression_algorithm is None:
