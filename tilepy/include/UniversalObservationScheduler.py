@@ -366,7 +366,11 @@ def PGalinFoV_NObs(filename,ObservationTime0,PointingFile,galFile, parameters,di
                   P_GALarray.append(np.float('{:1.4f}'.format(p_gal)))
                   P_GWarray.append(np.float('{:1.4f}'.format(p_gw)))
                   ObservationTime = str(ObservationTime).split('.')[0]
-                  ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
+                  try:
+                    ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
+                  except:
+                    ObservationTime = str(ObservationTime).split('+')[0]
+                    ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
                   ObservationTimearray.append(ObservationTime)
                   ObsName.append(obspar.name)
                   counter = counter + 1
@@ -500,7 +504,11 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
                             RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
                             DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
                             ObservationTime = str(ObservationTime).split('.')[0]
-                            ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
+                            try:
+                              ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
+                            except:
+                              ObservationTime = str(ObservationTime).split('+')[0]
+                              ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
                             ObservationTimearray.append(ObservationTime)
                             ObsName.append(obspar.name)
                             counter = counter + 1
@@ -512,7 +520,11 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
                         RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
                         DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
                         ObservationTime = str(ObservationTime).split('.')[0]
-                        ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
+                        try:
+                          ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
+                        except:
+                          ObservationTime = str(ObservationTime).split('+')[0]
+                          ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
                         ObservationTimearray.append(ObservationTime)
                         ObsName.append(obspar.name)
                         counter = counter + 1

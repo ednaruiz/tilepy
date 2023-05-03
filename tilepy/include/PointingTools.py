@@ -1363,14 +1363,12 @@ def CorrelateGalaxies_LVC_SteMass(prob, distmu, distsigma, distmean, disterr, di
     Gals = Gals[min_prob_cut]
 
     if(Info3D_available):
-
         Mgal1 =  Gals['SteMgal']
         Pgal_pos = Gals['dp_dV']
 
         Mgal1 = np.nan_to_num(Mgal1)
         Mgal = 10**(Mgal1)
         Pgal_pos = np.nan_to_num(Pgal_pos)
-
 
         Gmass = Mgal/(np.sum(Mgal))
         alpha = (Pgal_pos).sum()/(Pgal_pos*Gmass).sum()
@@ -2356,7 +2354,7 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 
     # iteration on chosen pixel to calculate the probability on their field of view using galaxies
     for l in range(0, len(cat_pix)):
-        dp_dV_FOV.append(PGalinFOV(prob, cat, cat_pix[l], FOV, totaldPdV, nside, UsePix=True))
+        dp_dV_FOV.append(ComputePGalinFOV(prob, cat, cat_pix[l], FOV, totaldPdV, nside, UsePix=True))
 
     cat_pix['PIXFOVPROB'] = dp_dV_FOV
 

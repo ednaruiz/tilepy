@@ -641,8 +641,7 @@ def PlotPointings_Pretty(filename, name, PointingsFile1, dirName):
         pgal = pgw
         pgal[:] = -1
     #print(time1, time2)
-    for i in range(len(time1)):
-        time.append((time1[i] + ' ' + time2[i]).split('"')[1])
+
     ra = np.atleast_1d(ra)
     dec = np.atleast_1d(dec)
     ra = ra.astype(np.float)
