@@ -155,7 +155,7 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
                  Mangrove):
 
     """
-    TTop level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
+    Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
     
     :param URL: the url of the probability fits or  png map
     :type URL: str

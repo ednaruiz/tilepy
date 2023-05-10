@@ -29,7 +29,21 @@ else:
 ############################################
 
 def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
-
+    """
+    Mid-level function that is called by GetSchedule to compute a observation schedule based on a 2D method.  
+    
+    :param filename: the name of the probability map file
+    :type filename: str
+    :param ObservationTime0: the desired time for scheduling to start 
+    :type date: str
+    :param PointingFile: The text file containing the pointings that have already been performed before the scheduling
+    :type datasetDir: str
+    :param obspar: Class containing the telescope configuration parameters to be used in the scheduling
+    :type galcatname: str
+    :param dirName: Path to the output directory where the schedules and plots will eb saved
+    :return: SuggestedPointings, ObservationTime0
+    rtype: ascii table, str
+    """
     # Main parameters
     
     print(obspar)
@@ -133,32 +147,33 @@ def BestCandidateonPGal(filename,ObservationTime0,galFile):
 
     ####################
     # ToDo: put these parameters into the 'parameters.ini' file and extract them here
-    '''
-    cfg = './configs/BestCandidateonPGal.ini'
-    parser = ConfigParser()
-    print(parser.read(cfg))
-    print(parser.sections())
-    section = 'GWBestGalaxyParameters'
 
-    try:
-        max_zenith = int(parser.get(section, 'max_zenith'))
-        MaxNights = int(parser.get(section, 'MaxNights'))
-        FOV = float(parser.get(section, 'FOV'))
-        MaxRuns = int(parser.get(section, 'MaxRuns'))
-        probCut = float(parser.get(section, 'probCut'))
-        MinimumProbCutForCatalogue = float(parser.get(section, 'MinimumProbCutForCatalogue'))
-        doplot = (parser.getboolean(section, 'doplot'))
-        Duration = int(parser.get(section, 'Duration'))
-        MinDuration = int(parser.get(section, 'MinDuration'))
-        SecondRound = (parser.getboolean(section, 'SecondRound'))
-        FulFillReq_Percentage = float(parser.get(section, 'FulFillReq_Percentage'))
+    
+    #cfg = './configs/BestCandidateonPGal.ini'
+    #parser = ConfigParser()
+    #print(parser.read(cfg))
+    #print(parser.sections())
+    #section = 'GWBestGalaxyParameters'
+
+    #try:
+    #    max_zenith = int(parser.get(section, 'max_zenith'))
+    #    MaxNights = int(parser.get(section, 'MaxNights'))
+    #    FOV = float(parser.get(section, 'FOV'))
+    #    MaxRuns = int(parser.get(section, 'MaxRuns'))
+    #    probCut = float(parser.get(section, 'probCut'))
+    #    MinimumProbCutForCatalogue = float(parser.get(section, 'MinimumProbCutForCatalogue'))
+    #    doplot = (parser.getboolean(section, 'doplot'))
+    #    Duration = int(parser.get(section, 'Duration'))
+    #    MinDuration = int(parser.get(section, 'MinDuration'))
+    #    SecondRound = (parser.getboolean(section, 'SecondRound'))
+    #    FulFillReq_Percentage = float(parser.get(section, 'FulFillReq_Percentage'))
 
 
-    except Exception, x:
-        print x
+    #except Exception, x:
+    #    print x
 
-    print('GWBestGalaxyParameters:', max_zenith,MaxNights,FOV, MaxRuns, probCut, MinimumProbCutForCatalogue, doplot, Duration, MinDuration, SecondRound, FulFillReq_Percentage)
-    '''
+    #print('GWBestGalaxyParameters:', max_zenith,MaxNights,FOV, MaxRuns, probCut, MinimumProbCutForCatalogue, doplot, Duration, MinDuration, SecondRound, FulFillReq_Percentage)
+
     #########################
     max_zenith = 60
     FOV = 1.5
@@ -299,7 +314,24 @@ def BestCandidateonPGal(filename,ObservationTime0,galFile):
     return SuggestedPointings,cat
 
 def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
+    """
+    Mid-level function that is called by GetSchedule to compute a observation schedule based on a 2D method.  
     
+    :param filename: the name of the probability map file
+    :type filename: str
+    :param ObservationTime0: the desired time for scheduling to start 
+    :type date: str
+    :param PointingFile: The text file containing the pointings that have already been performed before the scheduling
+    :type datasetDir: str
+    :param galFile: The path to the galaxy catalog
+    :type datasetDir: str   
+    :param obspar: Class containing the telescope configuration parameters to be used in the scheduling
+    :type galcatname: str
+    :param dirName: Path to the output directory where the schedules and plots will eb saved
+    :return: SuggestedPointings, cat
+    rtype: ascii table, astropy table
+    """
+
     # Main Parameters
 
     print(obspar)
@@ -481,6 +513,25 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
     return SuggestedPointings,cat
 
 def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,dirName):
+    """
+    Mid-level function that is called by GetSchedule to compute a observation schedule based on a 2D method.  
+    
+    :param filename: the name of the probability map file
+    :type filename: str
+    :param ObservationTime0: the desired time for scheduling to start 
+    :type date: str
+    :param PointingFile: The text file containing the pointings that have already been performed before the scheduling
+    :type datasetDir: str
+    :param galFile: The path to the galaxy catalog
+    :type datasetDir: str   
+    :param obspar: Class containing the telescope configuration parameters to be used in the scheduling
+    :type galcatname: str
+    :param dirName: Path to the output directory where the schedules and plots will eb saved
+    :return: SuggestedPointings, cat, area
+    rtype: ascii table, astropy table, float
+    """
+
+
 #(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
     # Main parameters from config
 
