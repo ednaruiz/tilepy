@@ -791,8 +791,9 @@ def LoadHealpixMap(thisfilename):
 
     :return tprob, tdistmu, tdistsigma, distnorm, detectors, event_id, distmean, disterr
     :rtype: array, array, array, array, array, str, float, foat, float, 
-"""
-'''    :return tprob : array of p-values as a function of sky position
+    """
+    '''
+   :return tprob : array of p-values as a function of sky position
     :return tdistmu : array of distance estimate
     :return tdistsigma : array of error on distance estimates
     :return distnorm : array of distance normalisations
@@ -801,7 +802,7 @@ def LoadHealpixMap(thisfilename):
     :return distmean: mean distance from the header
     :return disterr: error on distance from the header
     :rtype: array
-'''
+    '''
     PrintFileName = "Loading LVC HEALPix map from file: " + thisfilename
     print(PrintFileName)
     fitsfile = fits.open(thisfilename)
