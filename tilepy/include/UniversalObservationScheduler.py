@@ -172,9 +172,9 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
                   print('Fail')
                 else:
                   Round.append(2)
-                  P_GWarray.append(np.float('{:1.4f}'.format(np.float(P_GW))))
-                  RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
-                  DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
+                  P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
+                  RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
+                  DECarray.append(float('{:3.4f}'.format(float(TC.dec.deg))))
                   ObservationTime = str(ObservationTime).split('+')[0]
                   try:
                     ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
@@ -188,9 +188,9 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
 
             elif(P_GW >= obspar.MinProbCut):
               Round.append(1)
-              P_GWarray.append(np.float('{:1.4f}'.format(np.float(P_GW))))
-              RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
-              DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
+              P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
+              RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
+              DECarray.append(float('{:3.4f}'.format(float(TC.dec.deg))))
               ObservationTime = str(ObservationTime).split('+')[0]
               try:
                 ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
@@ -350,8 +350,8 @@ def PGalinFoV_NObs(filename,ObservationTime0,PointingFile,galFile, parameters,di
 
                           p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals2,False,visiGals2,tGals_aux2,sum_dP_dV, alreadysumipixarray2,nside, minz,obspar.max_zenith, obspar.FOV, counter,name,dirName,obspar.doplot)
   
-                          RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals2['RAJ2000'][:1]))))
-                          DECarray.append(np.float('{:3.4f}'.format(np.float(finalGals2['DEJ2000'][:1]))))
+                          RAarray.append(float('{:3.4f}'.format(float(finalGals2['RAJ2000'][:1]))))
+                          DECarray.append(float('{:3.4f}'.format(float(finalGals2['DEJ2000'][:1]))))
                           Round.append(2)
   
                   else:
@@ -360,11 +360,11 @@ def PGalinFoV_NObs(filename,ObservationTime0,PointingFile,galFile, parameters,di
                       #print("=================================")
                       #print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                       p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob,ObservationTime,obspar.Location,finalGals,False, visiGals,tGals_aux, sum_dP_dV,alreadysumipixarray1,nside, minz,obspar.max_zenith, obspar.FOV, counter,name, dirName, obspar.doplot)
-                      RAarray.append(np.float('{:3.4f}'.format(np.float(finalGals['RAJ2000'][:1]))))
-                      DECarray.append(np.float('{:3.4f}'.format(np.float(finalGals['DEJ2000'][:1]))))
+                      RAarray.append(float('{:3.4f}'.format(float(finalGals['RAJ2000'][:1]))))
+                      DECarray.append(float('{:3.4f}'.format(float(finalGals['DEJ2000'][:1]))))
                       Round.append(1)
-                  P_GALarray.append(np.float('{:1.4f}'.format(p_gal)))
-                  P_GWarray.append(np.float('{:1.4f}'.format(p_gw)))
+                  P_GALarray.append(float('{:1.4f}'.format(p_gal)))
+                  P_GWarray.append(float('{:1.4f}'.format(p_gw)))
                   ObservationTime = str(ObservationTime).split('.')[0]
                   try:
                     ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
@@ -501,8 +501,8 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
                         else:
                             Round.append(2)
                             P_GWarray.append(P_GW)
-                            RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
-                            DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
+                            RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
+                            DECarray.append(float('{:3.4f}'.format(float(TC.dec.deg))))
                             ObservationTime = str(ObservationTime).split('.')[0]
                             try:
                               ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')
@@ -516,9 +516,9 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
                     
                     elif (P_GW >= obspar.MinProbCut):
                         Round.append(1)
-                        P_GWarray.append(np.float('{:1.4f}'.format(np.float(P_GW))))
-                        RAarray.append(np.float('{:3.4f}'.format(np.float(TC.ra.deg))))
-                        DECarray.append(np.float('{:3.4f}'.format(np.float(TC.dec.deg))))
+                        P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
+                        RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
+                        DECarray.append(float('{:3.4f}'.format(float(TC.dec.deg))))
                         ObservationTime = str(ObservationTime).split('.')[0]
                         try:
                           ObservationTime = datetime.datetime.strptime(ObservationTime, '%Y-%m-%d %H:%M:%S')

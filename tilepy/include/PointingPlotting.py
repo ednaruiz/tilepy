@@ -58,10 +58,10 @@ def LoadPointingsGW(tpointingFile):
             time.append((time1 + ' ' + time2).split('"')[1])
             break
 
-    ra = ra.astype(np.float)
-    dec = dec.astype(np.float)
+    ra = ra.astype(float)
+    dec = dec.astype(float)
     coordinates = co.SkyCoord(ra,dec, frame='fk5', unit=(u.deg, u.deg))
-    #pgw = Pgw.astype(np.float)
+    #pgw = Pgw.astype(float)
     pgw = np.genfromtxt(tpointingFile, usecols=4, skip_header=1,delimiter=' ',unpack=True)
     return time, coordinates , pgw
 
@@ -85,8 +85,8 @@ def LoadPointingsGAL(tpointingFile):
             break
     coordinates=TransformRADec(ra, dec)
     print(Pgw)
-    Pgw = Pgw.astype(np.float)
-    Pgal = Pgal.astype(np.float)
+    Pgw = Pgw.astype(float)
+    Pgal = Pgal.astype(float)
     return time, coordinates ,Pgw, Pgal
 
 
@@ -644,10 +644,10 @@ def PlotPointings_Pretty(filename, name, PointingsFile1, dirName):
 
     ra = np.atleast_1d(ra)
     dec = np.atleast_1d(dec)
-    ra = ra.astype(np.float)
-    dec = dec.astype(np.float)
-    pgw = pgw.astype(np.float)
-    pgal = pgal.astype(np.float)
+    ra = ra.astype(float)
+    dec = dec.astype(float)
+    pgw = pgw.astype(float)
+    pgal = pgal.astype(float)
     coordinates = SkyCoord(ra, dec, frame='fk5', unit=(u.deg, u.deg))
 
 
