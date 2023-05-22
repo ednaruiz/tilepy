@@ -695,8 +695,6 @@ def order_inds2uniq(order, inds):
     return uniq
 
 
-
-
 def Check2Dor3D(fitsfile,filename):
 
     distnorm = []
@@ -1265,7 +1263,6 @@ def CorrelateGalaxies_LVC(prob, distmu, distsigma, distnorm, cat, Info3D_availab
     # Translate RA,Dec of galaxies into theta,phi angles
     theta = 0.5 * np.pi - np.deg2rad(dec)
     phi = np.deg2rad(ra)
-
 
     # Get corresponding healpix pixel IDs
     npix = len(prob)
@@ -2788,7 +2785,6 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
         print()
         
         #print('Plotting the observations')
-        #PointingPlottingGWCTA(GWFile, name, outDir, pointingsFileC, obspar.FOV, InputTimeList['Observatory'][ID])
 
         # --- Writting down the results ---
         pointingsFileC = '%s/%s_cov.txt' % (dirNameSch, ID)
@@ -2802,6 +2798,8 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
 
     if 'True' in SuggestedPointings['ObsInfo'] and Found == False:
         print('Source not covered')
+
+        #print('Plotting the observations')
         # --- Writting down the results ---
         pointingsFileC = '%s/%s_NOTcov.txt' % (dirNameSch, ID)
         ascii.write(SuggestedPointingsC, pointingsFileC, overwrite=True, fast_writer=False)

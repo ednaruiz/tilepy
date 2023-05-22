@@ -13,6 +13,9 @@ import datetime
 from six.moves import configparser
 import six
 from datetime import date
+import ligo.skymap.io.fits as lf
+from astropy.coordinates import SkyCoord
+
 
 if six.PY2:
   ConfigParser = configparser.SafeConfigParser
@@ -401,40 +404,34 @@ def PlotPointingsTogether(prob, time, targetCoord1, n1, targetCoord2, n2, nside,
         # plt.savefig("Pointing_Plotting_%s/PointingFOV_Comparison.png" %ObsArray)
 
 
-def PointingPlottingGWCTA(filename,name, dirName, PointingsFile,FOV,UseObs, ObsArray):
+def PointingPlottingGWCTA(filename, ID, outDir, SuggestedPointings,FOV):
 
     print()
     print('-------------------   PLOTTING SCHEDULE   --------------------')
     print()
 
+    # Mask table if necesary 
+    maskClean = (SuggestedPointings['ObsInfo'] == 'True')
+    SuggestedPointingsC = SuggestedPointings[maskClean]
+    SuggestedPointingsC.remove_column('ObsInfo')
+
+    observatory =  SuggestedPointingsC['Observatory'][0]
     # Observatory
     if UseObs == 'South':
-        print('Observed form the', UseObs)
         observatory = CTASouthObservatory()
     else:
-        print('Observed from the', UseObs)
         observatory = CTANorthObservatory()
 
-    if ('G' in filename):
-        names = filename.split("_")
-        name = names[0]
-
-
-    print('Loading map from ', filename)
-    prob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(filename)
+    skymap_OD = lf.read_sky_map(filename)
+    prob = skymap_OD[0]
     npix = len(prob)
     nside = hp.npix2nside(npix)
 
-    has3D=True
-    if(len(distnorm)==0):
-        print("Found a generic map without 3D information")
-    # flag the event for special treatment
-        has3D=False
-    else:
-        print("Found a 3D reconstruction")
-
-    ObservationTimearray, Coordinates, Probarray = LoadPointingsGW(PointingsFile)
-
+    #ObservationTimearray, Coordinates, Probarray = LoadPointingsGW(SuggestedPointings)
+    ObservationTimearray = SuggestedPointingsC["Observation Time UTC"]
+    Coordinates = SkyCoord(SuggestedPointingsC['RA[deg]'], SuggestedPointingsC['DEC[deg]'], frame='fk5',
+                        unit=(u.deg, u.deg))
+    Probarray = SuggestedPointingsC["PGW"]
     Probarray = np.atleast_1d(Probarray) #making sure to have an array on which we can call the sum() function
 
     print('----------   BUILDING A MAP   ----------')
@@ -450,17 +447,6 @@ def PointingPlottingGWCTA(filename,name, dirName, PointingsFile,FOV,UseObs, ObsA
                 converted_time.append(datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S.%f '))
             except ValueError:
                 converted_time.append(datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S'))
-
-
-    '''
-    converted_time2=[]
-    for i in range(0,len(ObservationTimearray2)):
-        time2 = ObservationTimearray2[i]
-        try:
-            converted_time2.append(datetime.datetime.strptime(time2, '%Y-%m-%d %H:%M:%S.%f '))
-        except ValueError:
-            converted_time2.append(datetime.datetime.strptime(time2, '%Y-%m-%d %H:%M:%S '))
-    '''
 
     #PlotPointings(prob,cat,converted_time,Coordinates,sum(Probarray), nside, FOV, name, dirName, doplot=True)
     
@@ -489,7 +475,7 @@ def PointingPlottingGWCTA(filename,name, dirName, PointingsFile,FOV,UseObs, ObsA
     #    os.mkdir(path, 493)
 
     hp.mollview(prob, rot=[180,0],coord='C', title="GW prob map (Ecliptic) + %s %g  %s/%s/%s %s:%s:%s UTC" %
-                                                  (name, sum(Probarray) * 100, converted_time[0].day, converted_time[0].month, converted_time[0].year,
+                                                  (str(ID), sum(Probarray) * 100, converted_time[0].day, converted_time[0].month, converted_time[0].year,
                                                    converted_time[0].hour, converted_time[0].minute, converted_time[0].second))
     hp.graticule()
     #plt.show()
