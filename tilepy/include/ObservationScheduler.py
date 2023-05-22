@@ -5,7 +5,7 @@
 
 
 from .TilingDetermination import PGWinFoV, PGalinFoV
-from .RankingObservationTimes import RankingTimes, RankingTimes_SkyMapInput_2D
+from .RankingObservationTimes import RankingTimes, RankingTimes_2D
 from .PointingPlotting import PointingPlotting
 from astropy.coordinates import SkyCoord
 from .PointingTools import Tools, LoadGalaxies, getdate, GetGBMMap, GetGWMap, Check2Dor3D, ObservationParameters
@@ -20,7 +20,7 @@ import json
 
 
 
-def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
+def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType):
     '''
     Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
     Args:
@@ -31,17 +31,14 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
         cfgFile: Path to the configuration file 
         Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
     '''
-    if Type == 'gbmpng':
-        targetType = 'GBM_Pointing'
+    if targetType == 'gbmpng':
         fitsMap, filename = GetGBMMap(URL)
         name = URL.split('/')[-3]
-    elif Type == 'gbm':
-        targetType = 'GBM_Pointing'
+    elif targetType == 'gbm':
         fitsMap = fits.open(URL)
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]
     else: 
-        targetType = 'GW_Pointing'
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
@@ -63,7 +60,7 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
             os.makedirs(dirName)
 
         print("===========================================================================================")
-        print("Starting the GW - 3D pointing calculation with the following parameters\n")
+        print("Starting the 3D pointing calculation with the following parameters\n")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", PointingsFile)
@@ -83,13 +80,13 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
 
         if (len(SuggestedPointings) != 0):
             FOLLOWUP = True
-            outfilename = '%s/SuggestedPointings_GWOptimisation.txt' % dirName
+            outfilename = '%s/SuggestedPointings_GalProbOptimisation.txt' % dirName
             ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
             print()
             RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName,
-                         '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name)
+                         '%s/SuggestedPointings_GalProbOptimisation.txt' % dirName, obspar.name)
             PointingPlotting(prob, obspar, name, dirName,
-                             '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name, filename)
+                             '%s/SuggestedPointings_GalProbOptimisation.txt' % dirName, obspar.name, filename)
         else:
             FOLLOWUP = False
             print('No observations are scheduled')
@@ -98,17 +95,17 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
 
         ObservationTime = date
         outputDir = "%s/%s" % (outDir, name)
-        dirName = '%s/PGWinFoV' % outputDir
+        dirName = '%s/PGinFoV' % outputDir
 
         if not os.path.exists(dirName):
             os.makedirs(dirName)
 
         print("===========================================================================================")
-        print("Starting the GW - 2D pointing calculation with the following parameters\n")
+        print("Starting the 2D pointing calculation with the following parameters\n")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", PointingsFile)
-        print("Catalog: ", galaxies)
+        #print("Galaxy Catalog: ", galaxies)
         print("Parameters: ", cfgFile)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
@@ -124,19 +121,19 @@ def GetSchedule_confile(URL, date,datasetDir,galcatname,outDir,cfgFile, Type):
 
         if (len(SuggestedPointings) != 0):
             FOLLOWUP = True
-            outfilename = '%s/SuggestedPointings_GWOptimisation.txt' % dirName
+            outfilename = '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName
             ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
             print()
-            cat = LoadGalaxies(galaxies)
-            RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName,
-                         '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name)
-            PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_GWOptimisation.txt' % dirName, obspar.name, filename)
+            #cat = LoadGalaxies(galaxies)
+            RankingTimes_2D(ObservationTime, filename, obspar, targetType, dirName,
+                         '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name)
+            PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name, filename)
         else:
             FOLLOWUP = False
             print('No observations are scheduled')
 
 
-def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
+def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
                  HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
                  MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                  Duration, MinDuration, UseGreytime, MinSlewing, online,
@@ -156,16 +153,13 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, Type, name, Lat,
     '''
 
     if Type == 'gbmpng':
-        targetType = 'GBM_Pointing'
         fitsMap, filename = GetGBMMap(URL)
         name = URL.split('/')[-3]
     elif Type == 'gbm':
-        targetType = 'GBM_Pointing'
         fitsMap = fits.open(URL)
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]
     else: 
-        targetType = 'GW_Pointing'
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 

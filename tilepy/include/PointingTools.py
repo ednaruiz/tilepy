@@ -2779,7 +2779,6 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
         print()
         
         #print('Plotting the observations')
-        #PointingPlottingGWCTA(GWFile, name, outDir, pointingsFileC, obspar.FOV, InputTimeList['Observatory'][ID])
 
         # --- Writting down the results ---
         pointingsFileC = '%s/%s_cov.txt' % (dirNameSch, ID)
@@ -2793,6 +2792,8 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
 
     if 'True' in SuggestedPointings['ObsInfo'] and Found == False:
         print('Source not covered')
+
+        #print('Plotting the observations')
         # --- Writting down the results ---
         pointingsFileC = '%s/%s_NOTcov.txt' % (dirNameSch, ID)
         ascii.write(SuggestedPointingsC, pointingsFileC, overwrite=True, fast_writer=False)

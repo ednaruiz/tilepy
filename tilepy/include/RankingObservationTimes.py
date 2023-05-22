@@ -386,6 +386,7 @@ def ProbabilitiesinPointings2D(Pointing,FOV,prob,nside):
     Pointing['Pgal'] = PGAL
 
     return Pointing
+
 def PGinFOV(ra,dec,prob,radius,nside):
 
     targetCoordpointing = co.SkyCoord(ra, dec, frame='fk5', unit=(u.deg, u.deg))
@@ -402,8 +403,6 @@ def PGinFOV(ra,dec,prob,radius,nside):
     P_GW = prob[ipix_disc].sum()
 
     return P_GW
-
-
 
 def Sortingby(galPointing,targetType, name, exposure):
 
@@ -451,16 +450,6 @@ def Sortingby(galPointing,targetType, name, exposure):
     #gwgalPointing_TH = gwgalPointing[new_order]
     outfilename='%s/RankingObservationTimes_forAlerter.txt' % name
     ascii.write(gwgalPointing_TH[np.argsort(gwgalPointing_TH['Id'])], outfilename, overwrite=True)
-
-
-    #gggalPointing.remove_column('DEJ2000')
-    #gggalPointing.remove_column('RAJ2000')
-
-    #gggalPointing['RA(HH:MM:SS) Dec (DD:MM:SS)'] = coord.to_string('hmsdms')
-    #outfilename='%s/RankingObservationTimes_Complete.txt' % name
-    #ascii.write(gggalPointing[np.argsort(gggalPointing['Pointing'])], outfilename,overwrite=True)
-
-
 
 def EvolutionPlot(galPointing,tname, ObsArray):
     cm = plt.get_cmap('gist_rainbow')
@@ -530,7 +519,7 @@ def RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName, Po
     EvolutionPlot(point, dirName, ObsArray)
     Sortingby(point, targetType, dirName, obspar.Duration)
 
-def RankingTimes_SkyMapInput_2D(ObservationTime, prob, obspar, targetType, dirName, PointingFile, ObsArray):
+def RankingTimes_2D(ObservationTime, prob, obspar, targetType, dirName, PointingFile, ObsArray):
 
     point = load_pointingFile(PointingFile)
 
@@ -543,6 +532,7 @@ def RankingTimes_SkyMapInput_2D(ObservationTime, prob, obspar, targetType, dirNa
     npix = len(prob)
     nside = hp.npix2nside(npix)
 
+    # In this function, the 2D probability is computed and the 3D probability is set to zero
     point = ProbabilitiesinPointings2D(point, obspar.FOV, prob, nside)
     point = VisibilityWindow(ObservationTime, point, obspar, dirName)
     
