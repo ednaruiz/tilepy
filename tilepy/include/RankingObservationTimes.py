@@ -133,8 +133,8 @@ def load_pointingFile(tpointingFile):
     for i in range(len(time1)):
         time.append((time1[i] + ' ' + time2[i].split(':')[0]+ ':'+time2[i].split(':')[1]).split('"')[1])
 
-    ra = ra.astype(np.float)
-    dec = dec.astype(np.float)
+    ra = ra.astype(float)
+    dec = dec.astype(float)
 
     l = list(range(len(ra)))
     Pointings = Table([l,time,ra,dec],names=('Pointing','Time','RAJ2000', 'DEJ2000'))
@@ -340,8 +340,8 @@ def ProbabilitiesinPointings3D(cat,galPointing,FOV, totaldPdV,prob,nside):
     #bucle
     for i in range(0,len(ra)):
         pgwcircle,pgalcircle =PGGPGalinFOV(cat,ra[i], dec[i],prob,totaldPdV,FOV,nside)
-        PGW.append(np.float('{:1.4f}'.format(pgwcircle)))
-        PGAL.append(np.float('{:1.4f}'.format(pgalcircle)))
+        PGW.append(float('{:1.4f}'.format(pgwcircle)))
+        PGAL.append(float('{:1.4f}'.format(pgalcircle)))
 
     galPointing['Pgw'] = PGW
     galPointing['Pgal'] = PGAL
@@ -379,8 +379,8 @@ def ProbabilitiesinPointings2D(Pointing,FOV,prob,nside):
     PGAL=[]
     for i in range(0,len(ra)):
         pgwcircle = PGinFOV(ra[i], dec[i],prob,FOV,nside)
-        PGW.append(np.float('{:1.4f}'.format(pgwcircle)))
-        PGAL.append(np.float('{:1.4f}'.format(0)))
+        PGW.append(float('{:1.4f}'.format(pgwcircle)))
+        PGAL.append(float('{:1.4f}'.format(0)))
 
     Pointing['Pgw'] = PGW
     Pointing['Pgal'] = PGAL

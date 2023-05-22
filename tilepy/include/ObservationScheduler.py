@@ -42,9 +42,8 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap,filename)
+    prob, has3D = Check2Dor3D(fitsMap, filename)
 
-    
     print("===========================================================================================")
     PointingsFile = "False"
     galaxies = datasetDir + galcatname
@@ -68,7 +67,7 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         print("Config parameters: ", cfgFile)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
+
         obspar = ObservationParameters()
         obspar.from_configfile(cfgFile)
 
@@ -109,7 +108,7 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         print("Parameters: ", cfgFile)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
+
         obspar = ObservationParameters()
         obspar.from_configfile(cfgFile)
 
@@ -140,17 +139,27 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
                  MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
                  FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
                  Mangrove):
-    '''
-    Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
-    Args:
-        URL: the url of the probability fits or  png map
-        date: the desired time for scheduling to start 
-        datasetDir: Path to the directory containting the datset like the galaxy catalog
-        outDir: Path to the output directory where the schedules and plots will eb saved 
-        cfgFile: Path to the configuration file 
-        Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
-        All the rest of the arguments might be put in one obspar class and can be found in a configuration file
-    '''
+
+    """
+    TTop level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
+    
+    :param URL: the url of the probability fits or  png map
+    :type URL: str
+    :param date: the desired time for scheduling to start 
+    :type date: str
+    :param datasetDir: Path to the directory containting the datset like the galaxy catalog
+    :type datasetDir: str
+    :param galcatname: name of the galaxy catalog to be used
+    :type galcatname: str
+    :param outDir: Path to the output directory where the schedules and plots will eb saved
+    :type  outDir: str
+    :param cfgFile: Path to the configuration file 
+    :type cfgFile: str
+    :param Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
+    :type Type: str
+    :return: SuggestedPointings_AstroCOLIBRI
+    rtype: Astropy table
+    """
 
     if targetType == 'gbmpng':
         fitsMap, filename = GetGBMMap(URL)
@@ -163,7 +172,7 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap,filename) 
+    prob, has3D = Check2Dor3D(fitsMap, filename)
 
     print("===========================================================================================")
     PointingsFile = "False"
@@ -172,12 +181,12 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
 
     obspar = ObservationParameters()
     obspar.from_args(name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
-                 HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
-                 MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
-                 Duration, MinDuration, UseGreytime, MinSlewing, online,
-                 MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
-                 FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
-                 Mangrove)
+                     HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
+                     MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
+                     Duration, MinDuration, UseGreytime, MinSlewing, online,
+                     MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
+                     FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
+                     Mangrove)
 
     if has3D:
 
@@ -195,7 +204,6 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         print("Catalog: ", galaxies)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
 
         SuggestedPointings, cat = PGalinFoV(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
 
@@ -231,7 +239,6 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         print("Catalog: ", galaxies)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
-        
 
         SuggestedPointings, t0 = PGWinFoV(filename, ObservationTime, PointingsFile, obspar, dirName)
 

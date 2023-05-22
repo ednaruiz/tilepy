@@ -30,6 +30,7 @@ import numpy.ma as ma
 from six.moves import configparser
 import six
 from gdpyc import GasMap, DustMap
+import tables
 from .gwobserve import Sensitivity, GRB
 if six.PY2:
   ConfigParser = configparser.SafeConfigParser
@@ -1204,10 +1205,10 @@ def TransformRADec(vra,vdec):
             dec.append(coord.dec.deg)
     else:
         #print(vra,vdec)
-        ra = vra.astype(np.float)
-        dec = vdec.astype(np.float)
-        #np.float(vra)
-        #dec = np.float(vdec)
+        ra = vra.astype(float)
+        dec = vdec.astype(float)
+        #float(vra)
+        #dec = float(vdec)
     #print(ra,dec)
     coordinates = co.SkyCoord(ra, dec, frame='fk5', unit=(u.deg, u.deg))
     return coordinates
@@ -1223,9 +1224,14 @@ def LoadGalaxies(tgalFile):
 
     print("Loading galaxy catalogue from " + tgalFile)
 
-    ra, dec, dist = np.genfromtxt(tgalFile, usecols=(1, 2, 3), skip_header=1, unpack=True)  # ra, dec in degrees
+    # Load data
+    h5file = tables.open_file(tgalFile, mode="r")
+    tcat = Table(h5file.root.catalog.read()[['no_GLADE', 'RA', 'Dec', 'd_L', 'B_mag']])
+    h5file.close()
 
-    tcat = Table([ra, dec, dist], names=('RAJ2000', 'DEJ2000', 'Dist'))
+    # Rename column to match naming scheme
+    tcat.rename_columns(['RA', 'Dec', 'd_L', 'B_mag'], ['RAJ2000', 'DEJ2000', 'Dist', 'Bmag'])
+
     return tcat
 
 def LoadGalaxies_SteMgal(tgalFile):
@@ -1235,9 +1241,14 @@ def LoadGalaxies_SteMgal(tgalFile):
 
     print("Loading galaxy catalogue from " + tgalFile)
 
-    ra, dec, dist, mgal = np.genfromtxt(tgalFile, usecols=(1, 2, 3, 4), skip_header=1, unpack=True)  # ra, dec in degrees
+    # Load data
+    h5file = tables.open_file(tgalFile, mode="r")
+    tcat = Table(h5file.root.catalog.read()[['no_GLADE', 'RA', 'Dec', 'd_L', 'B_mag', 'mass']])
+    h5file.close()
 
-    tcat = Table([ra, dec, dist, mgal], names=('RAJ2000', 'DEJ2000', 'Dist', 'SteMgal'))
+    # Rename column to match naming scheme
+    tcat.rename_columns(['RA', 'Dec', 'd_L', 'B_mag', 'mass'], ['RAJ2000', 'DEJ2000', 'Dist', 'Bmag', 'SteMgal'])
+
     return tcat
 
 def CorrelateGalaxies_LVC(prob, distmu, distsigma, distnorm, cat, Info3D_available,MinimumProbCutForCatalogue):
@@ -1349,14 +1360,12 @@ def CorrelateGalaxies_LVC_SteMass(prob, distmu, distsigma, distmean, disterr, di
     Gals = Gals[min_prob_cut]
 
     if(Info3D_available):
-
         Mgal1 =  Gals['SteMgal']
         Pgal_pos = Gals['dp_dV']
 
         Mgal1 = np.nan_to_num(Mgal1)
         Mgal = 10**(Mgal1)
         Pgal_pos = np.nan_to_num(Pgal_pos)
-
 
         Gmass = Mgal/(np.sum(Mgal))
         alpha = (Pgal_pos).sum()/(Pgal_pos*Gmass).sum()
@@ -2342,7 +2351,7 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 
     # iteration on chosen pixel to calculate the probability on their field of view using galaxies
     for l in range(0, len(cat_pix)):
-        dp_dV_FOV.append(PGalinFOV(prob, cat, cat_pix[l], FOV, totaldPdV, nside, UsePix=True))
+        dp_dV_FOV.append(ComputePGalinFOV(prob, cat, cat_pix[l], FOV, totaldPdV, nside, UsePix=True))
 
     cat_pix['PIXFOVPROB'] = dp_dV_FOV
 
@@ -2473,10 +2482,10 @@ def LoadGalaxies_GladeCTASimu(tgalFile):
 
     name, dist, z, ra, dec, flag = np.genfromtxt(tgalFile, usecols=(0, 1, 2, 3, 4, 5), skip_header=3, unpack=True,
                                                  dtype='str')  # ra, dec in degrees
-    ra = ra.astype(np.float)
-    dec = dec.astype(np.float)
-    z = z.astype(np.float)
-    dist = dist.astype(np.float) / 1000  # change to Mpc!
+    ra = ra.astype(float)
+    dec = dec.astype(float)
+    z = z.astype(float)
+    dist = dist.astype(float) / 1000  # change to Mpc!
     tcat = Table([name, ra, dec, dist, z, flag], names=('Galaxy', 'RAJ2000', 'DEJ2000', 'Dist', 'z', 'flag'))
     # print(tcat)
     return tcat
@@ -2501,8 +2510,8 @@ def PointingFileReadCTA(pointingFile):
                                                                                  skip_header=1, unpack=True,
                                                                                  dtype='str')
     time = []
-    RA = RA.astype(np.float)
-    Dec = Dec.astype(np.float)
+    RA = RA.astype(float)
+    Dec = Dec.astype(float)
     for i in range(len(time1)):
         time.append((time1[i] + ' ' + time2[i]).split('"')[1])
     OutputTable = Table([time, RA, Dec, Observatory, ZenIni, ZenEnd, Duration],
@@ -2514,15 +2523,15 @@ def PointingFileReadCTA(pointingFile):
 def TableImportCTA_simple(inputFileName):
     run, MergerID, RA, Dec, distance, z, theta, ndet, SNR, A90, A50 = np.genfromtxt(inputFileName, usecols=(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), skip_header=3, unpack=True, dtype='str')
-    RA = RA.astype(np.float)
-    Dec = Dec.astype(np.float)
-    z = z.astype(np.float)
-    distance = distance.astype(np.float)
-    theta = theta.astype(np.float)
-    ndet = ndet.astype(np.float)
-    SNR = SNR.astype(np.float)
-    A90 = A90.astype(np.float)
-    A50 = A50.astype(np.float)
+    RA = RA.astype(float)
+    Dec = Dec.astype(float)
+    z = z.astype(float)
+    distance = distance.astype(float)
+    theta = theta.astype(float)
+    ndet = ndet.astype(float)
+    SNR = SNR.astype(float)
+    A90 = A90.astype(float)
+    A50 = A50.astype(float)
     OutputTable = Table([run, MergerID, RA, Dec, distance, z, theta, ndet, SNR, A90, A50], names=(
     'run', 'MergerID', 'RA', 'Dec', 'Distance', 'redshift', 'theta', 'ndet', 'SNR', 'A90', 'A50'))
     return OutputTable
@@ -2537,17 +2546,17 @@ def TableImportCTA(tgalFile):
                                                                                                       skip_header=1,
                                                                                                       unpack=True,
                                                                                                       dtype='str')
-    RA = RA.astype(np.float)
-    Dec = Dec.astype(np.float)
-    z = z.astype(np.float)
-    distance = distance.astype(np.float) / 1000  # to Mpc!
-    distMax = distMax.astype(np.float) / 1000  # to Mpc!
-    distMin = distMin.astype(np.float) / 1000  # to Mpc!
-    theta = theta.astype(np.float)
-    ndet = ndet.astype(np.float)
-    SNR = SNR.astype(np.float)
-    A90 = A90.astype(np.float)
-    A50 = A50.astype(np.float)
+    RA = RA.astype(float)
+    Dec = Dec.astype(float)
+    z = z.astype(float)
+    distance = distance.astype(float) / 1000  # to Mpc!
+    distMax = distMax.astype(float) / 1000  # to Mpc!
+    distMin = distMin.astype(float) / 1000  # to Mpc!
+    theta = theta.astype(float)
+    ndet = ndet.astype(float)
+    SNR = SNR.astype(float)
+    A90 = A90.astype(float)
+    A50 = A50.astype(float)
     OutputTable = Table([run, MergerID, RA, Dec, distance, distMin, distMax, z, theta, ndet, SNR, A90, A50], names=(
     'run', 'MergerID', 'RA', 'Dec', 'Distance', 'DistMin', 'DistMax', 'redshift', 'theta', 'ndet', 'SNR', 'A90', 'A50'))
     # print(OutputTable)
@@ -2557,15 +2566,15 @@ def TableImportCTA(tgalFile):
 def TableImportCTA_Glade(tgalFile):
     run, gal, MergerID, RA, Dec, distance, z, theta, ndet, SNR, A90, A50 = np.genfromtxt(tgalFile, usecols=(
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11), skip_header=2, unpack=True, dtype='str')
-    RA = RA.astype(np.float)
-    Dec = Dec.astype(np.float)
-    z = z.astype(np.float)
-    distance = distance.astype(np.float) / 1000  # to Mpc!
-    theta = theta.astype(np.float)
-    ndet = ndet.astype(np.float)
-    SNR = SNR.astype(np.float)
-    A90 = A90.astype(np.float)
-    A50 = A50.astype(np.float)
+    RA = RA.astype(float)
+    Dec = Dec.astype(float)
+    z = z.astype(float)
+    distance = distance.astype(float) / 1000  # to Mpc!
+    theta = theta.astype(float)
+    ndet = ndet.astype(float)
+    SNR = SNR.astype(float)
+    A90 = A90.astype(float)
+    A50 = A50.astype(float)
     OutputTable = Table([run, gal, MergerID, RA, Dec, distance, z, theta, ndet, SNR, A90, A50], names=(
     'run', 'Galaxy', 'MergerID', 'RA', 'Dec', 'Distance', 'redshift', 'theta', 'ndet', 'SNR', 'A90', 'A50'))
     # print(OutputTable)
@@ -2624,9 +2633,9 @@ def TableImportCTA_Obs(tobsFile):
 
 def TableImportCTA_LS(tgalFile):
     eventid, RA, Dec, distance = np.genfromtxt(tgalFile, usecols=(0, 3, 4, 8), skip_header=1, unpack=True, dtype='str')
-    RA = RA.astype(np.float)
-    Dec = Dec.astype(np.float)
-    distance = distance.astype(np.float) / 1000  # to Mpc!
+    RA = RA.astype(float)
+    Dec = Dec.astype(float)
+    distance = distance.astype(float) / 1000  # to Mpc!
     OutputTable = Table([eventid, RA, Dec, distance], names=('MergerID', 'RA', 'Dec', 'Distance'))
     return OutputTable
 
@@ -2759,7 +2768,7 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
     Pointings = SkyCoord(SuggestedPointingsC['RA[deg]'], SuggestedPointingsC['DEC[deg]'], frame='fk5',
                         unit=(u.deg, u.deg))
 
-    totalPGW = np.float('{:1.4f}'.format(np.float(sum(SuggestedPointingsC['PGW']))))
+    totalPGW = float('{:1.4f}'.format(float(sum(SuggestedPointingsC['PGW']))))
 
     # Check if the source is covered by the scheduled pointings
     Found, nP = IsSourceInside(Pointings, Source, obspar.FOV, obspar.ReducedNside)
