@@ -21,16 +21,27 @@ import json
 
 
 def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType):
-    '''
-    Description: Top level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
-    Args:
-        URL: the url of the probability fits or  png map
-        date: the desired time for scheduling to start 
-        datasetDir: Path to the directory containting the datset like the galaxy catalog
-        outDir: Path to the output directory where the schedules and plots will eb saved 
-        cfgFile: Path to the configuration file 
-        targetType: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
-    '''
+    """
+    Top level function that is called by the user with specific arguments and creates a folder 
+    with the tiling schedules for a single telescope and visibility plots.  
+    
+    :param URL: the url of the probability fits or  png map
+    :type URL: str
+    :param date: the desired time for scheduling to start 
+    :type date: str
+    :param datasetDir: Path to the directory containting the datset like the galaxy catalog
+    :type datasetDir: str
+    :param galcatname: name of the galaxy catalog to be used
+    :type galcatname: str
+    :param outDir: Path to the output directory where the schedules and plots will eb saved
+    :type  outDir: str
+    :param cfgFile: Path to the configuration file 
+    :type cfgFile: str
+    :param Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
+    :type Type: str
+    :return: none
+    rtype: none
+    """
     if targetType == 'gbmpng':
         fitsMap, filename = GetGBMMap(URL)
         name = URL.split('/')[-3]
