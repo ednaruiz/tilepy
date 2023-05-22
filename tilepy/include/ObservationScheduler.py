@@ -29,7 +29,7 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         datasetDir: Path to the directory containting the datset like the galaxy catalog
         outDir: Path to the output directory where the schedules and plots will eb saved 
         cfgFile: Path to the configuration file 
-        Type: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
+        targetType: The type of the url given. gw if fits GW map, gbm if fits GBM map and gbmpng if PNG GBM map
     '''
     if targetType == 'gbmpng':
         fitsMap, filename = GetGBMMap(URL)
@@ -152,10 +152,10 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         All the rest of the arguments might be put in one obspar class and can be found in a configuration file
     '''
 
-    if Type == 'gbmpng':
+    if targetType == 'gbmpng':
         fitsMap, filename = GetGBMMap(URL)
         name = URL.split('/')[-3]
-    elif Type == 'gbm':
+    elif targetType == 'gbm':
         fitsMap = fits.open(URL)
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]

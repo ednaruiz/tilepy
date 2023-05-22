@@ -694,8 +694,6 @@ def order_inds2uniq(order, inds):
     return uniq
 
 
-
-
 def Check2Dor3D(fitsfile,filename):
 
     distnorm = []
@@ -1225,9 +1223,9 @@ def LoadGalaxies(tgalFile):
 
     print("Loading galaxy catalogue from " + tgalFile)
 
-    numb, ra, dec, dist, mgal = np.genfromtxt(tgalFile, usecols=(0, 1, 2, 3, 4), skip_header=1, unpack=True)  # ra, dec in degrees
+    ra, dec, dist = np.genfromtxt(tgalFile, usecols=(1, 2, 3), skip_header=1, unpack=True)  # ra, dec in degrees
 
-    tcat = Table([ra, dec, dist, mgal], names=('RAJ2000', 'DEJ2000', 'Dist', 'SteMgal'))
+    tcat = Table([ra, dec, dist], names=('RAJ2000', 'DEJ2000', 'Dist'))
     return tcat
 
 def LoadGalaxies_SteMgal(tgalFile):
@@ -1237,7 +1235,7 @@ def LoadGalaxies_SteMgal(tgalFile):
 
     print("Loading galaxy catalogue from " + tgalFile)
 
-    numb, ra, dec, dist, mgal = np.genfromtxt(tgalFile, usecols=(0, 1, 2, 3, 4), skip_header=1, unpack=True)  # ra, dec in degrees
+    ra, dec, dist, mgal = np.genfromtxt(tgalFile, usecols=(1, 2, 3, 4), skip_header=1, unpack=True)  # ra, dec in degrees
 
     tcat = Table([ra, dec, dist, mgal], names=('RAJ2000', 'DEJ2000', 'Dist', 'SteMgal'))
     return tcat
@@ -1254,7 +1252,6 @@ def CorrelateGalaxies_LVC(prob, distmu, distsigma, distnorm, cat, Info3D_availab
     # Translate RA,Dec of galaxies into theta,phi angles
     theta = 0.5 * np.pi - np.deg2rad(dec)
     phi = np.deg2rad(ra)
-
 
     # Get corresponding healpix pixel IDs
     npix = len(prob)
