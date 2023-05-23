@@ -122,7 +122,7 @@ def PointingPlotting(prob, obspar, name,dirName,PointingsFile1, ObsArray, filena
                     #converted_time1.append(datetime.datetime.strptime(time1, '%Y-%m-%d %H:%M:%S'))
     #PlotPointingsTogether(prob,converted_time1[0],Coordinates1,sum(Probarray1),name1,Coordinates2,sum(Probarray2),name2, nside, obspar.FOV, doplot=True)
     PlotPointings(prob,converted_time1,Coordinates1,sum(Probarray1), nside, obspar, name, dirName, ObsArray)
-    PlotPointings_Pretty(filename, obspar.name, PointingsFile1, dirName)
+    #PlotPointings_Pretty(filename, obspar.name, PointingsFile1, dirName)
 
 
 def PlotPointings(prob, time, targetCoord, Totalprob, nside, obspar, name, dirName, ObsArray):

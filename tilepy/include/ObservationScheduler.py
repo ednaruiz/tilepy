@@ -134,8 +134,7 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
             outfilename = '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName
             ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
             print()
-            #cat = LoadGalaxies(galaxies)
-            RankingTimes_2D(ObservationTime, filename, obspar, targetType, dirName,
+            RankingTimes_2D(ObservationTime, prob, obspar, targetType, dirName,
                          '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name)
             PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name, filename)
         else:
