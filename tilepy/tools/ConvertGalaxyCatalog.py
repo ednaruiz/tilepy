@@ -9,7 +9,8 @@ import tables
 logging.basicConfig(format='%(asctime)s %(message)s', level=logging.INFO)
 
 # Define argument parser
-parser = argparse.ArgumentParser(description='Tool to converte GLADE+ catalog to internal data format')
+parser = argparse.ArgumentParser(
+    description='Tool to converte GLADE+ catalog to internal data format')
 parser.add_argument("-i", "--input", nargs='?',
                     dest='input', action='store',
                     required=True, help="Input catalog file")
@@ -158,11 +159,13 @@ if extension == '.parquet':
     catalog = pd.read_parquet(args.input, engine='fastparquet')
     catalog = catalog.rename(cosmo_hub_converter_name_columns_catalog, axis=1)
     for col in cosmo_hub_converter_columns_catalog.keys():
-        catalog[col] = catalog[col].apply(cosmo_hub_converter_columns_catalog[col])
+        catalog[col] = catalog[col].apply(
+            cosmo_hub_converter_columns_catalog[col])
 else:
     catalog = pd.read_csv(args.input, sep=' ', header=None,
                           names=name_columns_catalog, dtype=dtype_columns_catalog, converters=converter_columns_catalog)
-logging.info('Catalog files loaded with success in {0}s'.format(time.time() - tstart))
+logging.info('Catalog files loaded with success in {0}s'.format(
+    time.time() - tstart))
 
 # Compute filter
 logging.info('Start computing catalog filter')
@@ -187,7 +190,8 @@ tstart = time.time()
 
 if args.text_format:
     catalog = catalog[catalog['valid_data']]
-    catalog[['no_GLADE', 'RA', 'Dec', 'd_L', 'mass']].to_csv(args.output, index=False)
+    catalog[['no_GLADE', 'RA', 'Dec', 'd_L', 'mass']].to_csv(
+        args.output, index=False)
 else:
 
     # Define table structure hdf5
@@ -204,12 +208,18 @@ else:
         mass_flag = tables.Int8Col()
         merger_rate = tables.Float32Col()
         merger_rate_err = tables.Float32Col()
-        no_PGC = tables.StringCol(np.max(catalog['no_PGC'].apply(lambda x: len(x))))
-        name_GWGC = tables.StringCol(np.max(catalog['name_GWGC'].apply(lambda x: len(x))))
-        name_HyperLEDA = tables.StringCol(np.max(catalog['name_HyperLEDA'].apply(lambda x: len(x))))
-        name_2MASS = tables.StringCol(np.max(catalog['name_2MASS'].apply(lambda x: len(x))))
-        name_WISExSCOS = tables.StringCol(np.max(catalog['name_WISExSCOS'].apply(lambda x: len(x))))
-        name_SDSS_DR16Q = tables.StringCol(np.max(catalog['name_SDSS_DR16Q'].apply(lambda x: len(x))))
+        no_PGC = tables.StringCol(
+            np.max(catalog['no_PGC'].apply(lambda x: len(x))))
+        name_GWGC = tables.StringCol(
+            np.max(catalog['name_GWGC'].apply(lambda x: len(x))))
+        name_HyperLEDA = tables.StringCol(
+            np.max(catalog['name_HyperLEDA'].apply(lambda x: len(x))))
+        name_2MASS = tables.StringCol(
+            np.max(catalog['name_2MASS'].apply(lambda x: len(x))))
+        name_WISExSCOS = tables.StringCol(
+            np.max(catalog['name_WISExSCOS'].apply(lambda x: len(x))))
+        name_SDSS_DR16Q = tables.StringCol(
+            np.max(catalog['name_SDSS_DR16Q'].apply(lambda x: len(x))))
         object_type = tables.StringCol(1)
         B_mag = tables.Float32Col()
         B_mag_err = tables.Float32Col()
@@ -234,7 +244,6 @@ else:
         v_err = tables.Float32Col()
         z_err = tables.Float32Col()
 
-
     # Create filters for data compression
     if args.compression_algorithm is None:
         filter_catalog = tables.Filters()
@@ -246,7 +255,8 @@ else:
 
     # Create files and node
     h5file = tables.open_file(args.output, mode='w', filters=filter_catalog)
-    table = h5file.create_table(h5file.root, 'catalog', TableCatalog, expectedrows=len(catalog))
+    table = h5file.create_table(
+        h5file.root, 'catalog', TableCatalog, expectedrows=len(catalog))
 
     # Determine dtype conversion (pandas to file data model)
     dtype_data_model_file = h5file.root.catalog.dtype
