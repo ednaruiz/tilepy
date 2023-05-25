@@ -19,12 +19,11 @@ import os
 import json
 
 
-
-def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType):
+def GetSchedule_confile(URL, date, datasetDir, galcatname, outDir, cfgFile, PointingsFile, targetType):
     """
     Top level function that is called by the user with specific arguments and creates a folder 
     with the tiling schedules for a single telescope and visibility plots.  
-    
+
     :param URL: the url of the probability fits or  png map
     :type URL: str
     :param date: the desired time for scheduling to start 
@@ -44,31 +43,43 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
     """
     if targetType == 'gbmpng':
         fitsMap, filename = GetGBMMap(URL)
+        if fitsMap is None and filename is None:
+            print('The localization map is not available, returning.')
+            return
         name = URL.split('/')[-3]
     elif targetType == 'gbm':
         fitsMap = fits.open(URL)
+        if fitsMap is None:
+            print('The localization map is not available, returning.')
+            return
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]
-    else: 
+    else:
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
     prob, has3D = Check2Dor3D(fitsMap, filename)
 
     print("===========================================================================================")
-    PointingsFile = "False"
+
     galaxies = datasetDir + galcatname
-    #cfgFile = "./configs/FollowupParameters.ini"
+    # cfgFile = "./configs/FollowupParameters.ini"
+
+    ObservationTime = date
+    outputDir = "%s/%s" % (outDir, name)
 
     if has3D:
+        dirName = f"{outputDir}/PGallinFoV"
+    else:
+        dirName = f"{outputDir}/PGinFoV"
 
-        ObservationTime = date
-        outputDir = "%s/%s" % (outDir, name)
-        dirName = '%s/PGallinFoV' % outputDir
+    if not os.path.exists(dirName):
+        os.makedirs(dirName)
 
-        if not os.path.exists(dirName):
-            os.makedirs(dirName)
+    obspar = ObservationParameters()
+    obspar.from_configfile(cfgFile)
 
+    if has3D:
         print("===========================================================================================")
         print("Starting the 3D pointing calculation with the following parameters\n")
         print("Filename: ", name)
@@ -79,10 +90,8 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
 
-        obspar = ObservationParameters()
-        obspar.from_configfile(cfgFile)
-
-        SuggestedPointings, cat = PGalinFoV(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
+        SuggestedPointings, cat = PGalinFoV(
+            filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
 
         print(SuggestedPointings)
         print("===========================================================================================")
@@ -91,7 +100,8 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         if (len(SuggestedPointings) != 0):
             FOLLOWUP = True
             outfilename = '%s/SuggestedPointings_GalProbOptimisation.txt' % dirName
-            ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
+            ascii.write(SuggestedPointings, outfilename,
+                        overwrite=True, fast_writer=False)
             print()
             RankingTimes(ObservationTime, filename, cat, obspar, targetType, dirName,
                          '%s/SuggestedPointings_GalProbOptimisation.txt' % dirName, obspar.name)
@@ -103,27 +113,17 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
 
     else:
 
-        ObservationTime = date
-        outputDir = "%s/%s" % (outDir, name)
-        dirName = '%s/PGinFoV' % outputDir
-
-        if not os.path.exists(dirName):
-            os.makedirs(dirName)
-
         print("===========================================================================================")
         print("Starting the 2D pointing calculation with the following parameters\n")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", PointingsFile)
-        #print("Galaxy Catalog: ", galaxies)
         print("Parameters: ", cfgFile)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
 
-        obspar = ObservationParameters()
-        obspar.from_configfile(cfgFile)
-
-        SuggestedPointings, t0 = PGWinFoV(filename, ObservationTime, PointingsFile, obspar, dirName)
+        SuggestedPointings, t0 = PGWinFoV(
+            filename, ObservationTime, PointingsFile, obspar, dirName)
 
         print(SuggestedPointings)
         print("===========================================================================================")
@@ -132,27 +132,28 @@ def GetSchedule_confile(URL,date,datasetDir,galcatname,outDir,cfgFile,targetType
         if (len(SuggestedPointings) != 0):
             FOLLOWUP = True
             outfilename = '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName
-            ascii.write(SuggestedPointings, outfilename, overwrite=True, fast_writer=False)
+            ascii.write(SuggestedPointings, outfilename,
+                        overwrite=True, fast_writer=False)
             print()
             RankingTimes_2D(ObservationTime, prob, obspar, targetType, dirName,
-                         '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name)
-            PointingPlotting(prob, obspar, name, dirName, '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name, filename)
+                            '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name)
+            PointingPlotting(prob, obspar, name, dirName,
+                             '%s/SuggestedPointings_2DProbOptimisation.txt' % dirName, obspar.name, filename)
         else:
             FOLLOWUP = False
             print('No observations are scheduled')
 
 
-def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
-                 HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
-                 MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
-                 Duration, MinDuration, UseGreytime, MinSlewing, online,
-                 MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound ,
-                 FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
-                 Mangrove):
-
+def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
+                        HorizonMoon, gMoonGrey, gMoonPhase, MoonSourceSeparation,
+                        MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
+                        Duration, MinDuration, UseGreytime, MinSlewing, online,
+                        MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
+                        FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
+                        Mangrove):
     """
     TTop level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
-    
+
     :param URL: the url of the probability fits or  png map
     :type URL: str
     :param date: the desired time for scheduling to start 
@@ -178,7 +179,7 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         fitsMap = fits.open(URL)
         filename = URL
         name = URL.split('all_')[1].split('_v00')[0]
-    else: 
+    else:
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
@@ -187,7 +188,7 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
     print("===========================================================================================")
     PointingsFile = "False"
     galaxies = datasetDir + galcatname
-    #cfgFile = "./configs/FollowupParameters.ini"
+    # cfgFile = "./configs/FollowupParameters.ini"
 
     obspar = ObservationParameters()
     obspar.from_args(name, Lat, Lon, Height, gSunDown, HorizonSun, gMoonDown,
@@ -215,7 +216,8 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
 
-        SuggestedPointings, cat = PGalinFoV(filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
+        SuggestedPointings, cat = PGalinFoV(
+            filename, ObservationTime, PointingsFile, galaxies, obspar, dirName)
 
         print(SuggestedPointings)
         print("===========================================================================================")
@@ -250,7 +252,8 @@ def GetSchedule_funcarg(URL, date,datasetDir,galcatname,outDir, targetType, name
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
 
-        SuggestedPointings, t0 = PGWinFoV(filename, ObservationTime, PointingsFile, obspar, dirName)
+        SuggestedPointings, t0 = PGWinFoV(
+            filename, ObservationTime, PointingsFile, obspar, dirName)
 
         print(SuggestedPointings)
         print("===========================================================================================")
