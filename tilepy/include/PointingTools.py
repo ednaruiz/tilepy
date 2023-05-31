@@ -1,38 +1,39 @@
 #####################################################################
 # Author: Monica Seglar-Arroyo
-# Contributors: Halim Ashkar,  Fabian Schussler
+# Contributors: Halim Ashkar,  Fabian Schussler, Mathieu de Bony
 # All the tools that are needed to follow-up a GW with an IACT (HESS)
 # are described and implemented in the following.
 #####################################################################
 # Packages
-import pytz
-from astropy.coordinates import EarthLocation, get_sun
-import ephem
-from mocpy import MOC
-from scipy.stats import norm
-import time
+import datetime
 import os
-from .ObservingTimes import ObtainSingleObservingTimes
+import time
+
+import astropy.coordinates as co
+import ephem
+import healpy as hp
 import matplotlib.pyplot as plt
 import numpy as np
-import healpy as hp
-from astropy.table import Table
-from astropy import units as u
-from astropy.utils import iers
-import astropy.coordinates as co
-from astropy.time import Time
+import numpy.ma as ma
 import pytz
+import six
+import tables
+from astropy import units as u
+from astropy.coordinates import EarthLocation, get_sun
 from astropy.coordinates import SkyCoord, AltAz
 from astropy.coordinates import get_moon
 from astropy.io import fits
-import datetime
-import numpy.ma as ma
+from astropy.table import Table
+from astropy.time import Time
+from astropy.utils import iers
+from gdpyc import DustMap
+from mocpy import MOC
+from scipy.stats import norm
 from six.moves import configparser
-import six
-from gdpyc import GasMap, DustMap
-import tables
+
 from .gwobserve import Sensitivity, GRB
 from .observatory import Observatory
+
 if six.PY2:
     ConfigParser = configparser.SafeConfigParser
 else:
@@ -128,18 +129,6 @@ class Tools:
         return moon.alt * 180. / np.pi
 
     @classmethod
-    def MoonAz(cls, obsTime, obsSite):
-        moon = ephem.Moon()
-        obs = ephem.Observer()
-        obs.lon = str(obsSite.Lon / u.deg)
-        obs.lat = str(obsSite.Lat / u.deg)
-        obs.elev = obsSite.Height / u.m
-        obs.date = obsTime  # Requires time in UTC
-        moon.compute(obs)
-        print('Azimuth of the moon = ', moon.az * 180. / np.pi)
-        return moon.az * 180 / np.pi
-
-    @classmethod
     def NextSunrise(cls, obsTime, obsPar):
         sun = ephem.Sun()
         obs = ephem.Observer()
@@ -180,49 +169,6 @@ class Tools:
         nextSunset = obs.next_setting(
             sun, use_center=True).datetime().replace(tzinfo=pytz.utc)
         return nextSunset
-
-    @classmethod
-    def PreviousMoonrise(cls, obsTime, obsPar):
-        moon = ephem.Moon()
-        obs = ephem.Observer()
-        obs.lon = str(obsPar.Lon / u.deg)
-        obs.lat = str(obsPar.Lat / u.deg)
-        obs.elev = obsPar.Height / u.m
-        obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obsPar.HorizonMoon
-        # print('NewHorizon=',obs.horizon)
-        moon.compute()
-        previousMoonrise = obs.previous_rising(
-            moon, use_center=True).datetime().replace(tzinfo=pytz.utc)
-        return previousMoonrise
-
-    @classmethod
-    def NextMoonrise(cls, obsTime, obsPar):
-        moon = ephem.Moon()
-        obs = ephem.Observer()
-        obs.lon = str(obsPar.Lon / u.deg)
-        obs.lat = str(obsPar.Lat / u.deg)
-        obs.elev = obsPar.Height / u.m
-        obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obsPar.HorizonMoon
-        moon.compute()
-        nextMoonrise = obs.next_rising(
-            moon, use_center=True).datetime().replace(tzinfo=pytz.utc)
-        return nextMoonrise
-
-    @classmethod
-    def PreviousSunset(cls, obsTime, obsPar):
-        sun = ephem.Sun()
-        obs = ephem.Observer()
-        obs.lon = str(obsPar.Lon / u.deg)
-        obs.lat = str(obsPar.Lat / u.deg)
-        obs.elev = obsPar.Height / u.m
-        obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obsPar.HorizonSun
-        sun.compute()
-        previousSunset = obs.previous_setting(
-            sun, use_center=True).datetime().replace(tzinfo=pytz.utc)
-        return previousSunset
 
     @classmethod
     def PreviousMoonset(cls, obsTime, obsPar):
@@ -278,32 +224,6 @@ class Tools:
         return GreyObsTime
 
     @classmethod
-    def TrustingDarknessMoon(cls, obsTime, referencetime, obsPar):
-        DarkObsTime = obsTime
-        # Make sure that its night
-        if ((DarkObsTime.hour >= referencetime.hour and DarkObsTime.day == referencetime.day) or (
-                DarkObsTime.hour <= Tools.NextSunrise(referencetime, obsPar).hour and DarkObsTime.day == Tools.NextSunrise(
-                referencetime, obsPar).day)):
-            while (Tools.IsDarkness(DarkObsTime, obsPar) == False):
-                DarkObsTime = DarkObsTime + datetime.timedelta(minutes=1)
-        return DarkObsTime
-
-    @classmethod
-    def TrustingGreynessMoon(cls, obsTime, referencetime, obsPar):
-        GreyObsTime = obsTime
-        # Make sure that its night
-        if ((GreyObsTime.hour >= referencetime.hour and GreyObsTime.day == referencetime.day) or (
-                GreyObsTime.hour <= Tools.NextSunrise(referencetime, obsPar).hour and GreyObsTime.day == Tools.NextSunrise(
-                referencetime, obsPar).day)):
-            while (Tools.IsGreyness(GreyObsTime, obsPar) == True):
-                GreyObsTime = GreyObsTime + datetime.timedelta(minutes=1)
-        if (Tools.IsGreyness(GreyObsTime, obsPar) == False):
-            if ((GreyObsTime - obsTime) >= datetime.timedelta(minutes=10)):
-                return True, GreyObsTime
-            if ((GreyObsTime - obsTime) < datetime.timedelta(minutes=10)):
-                return False, GreyObsTime
-
-    @classmethod
     def UTCtoNamibia(cls, UTCtime):
         TimezonesDifference = datetime.timedelta(hours=2)
         NamibianTime = UTCtime + TimezonesDifference
@@ -353,14 +273,6 @@ class Tools:
             # print('You got here')
         print(YouAreInside)
         return YouAreInside
-
-    @classmethod
-    def GetAirMass(cls, time, coords, location):
-        frame_obs = AltAz(obstime=time,
-                          location=location)
-        radecs = coords.transform_to(frame_obs)
-        aimrass = radecs.secz
-        return aimrass
 
     @classmethod
     def GetGalacticExtinction(cls, coords, dustmap='SFD', filters='SDSS_r'):
