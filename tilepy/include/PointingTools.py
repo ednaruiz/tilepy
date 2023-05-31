@@ -32,6 +32,7 @@ import six
 from gdpyc import GasMap, DustMap
 import tables
 from .gwobserve import Sensitivity, GRB
+from .observatory import Observatory
 if six.PY2:
     ConfigParser = configparser.SafeConfigParser
 else:
@@ -840,76 +841,16 @@ def NightDarkObservation(time, obspar):
     Function that searches for an array of observation times that fulfilled darkness condition and window
 
     '''
-
-    MaxNights = obspar.MaxNights
-    duration = obspar.Duration
-    minduration = obspar.MinDuration
-    WindowDuration = datetime.timedelta(minutes=duration)
-    MinimalWindowDuration = datetime.timedelta(minutes=minduration)
-    AuxMax = 100
-    NightDarkRuns = []
-    isFirstNight = True
-
-    # ObservationTime0 = datetime.datetime.strptime(InputChar['Time'], '%Y-%m-%d %H:%M:%S')
-    time = pytz.utc.localize(time)
-    # Loop for the nights of observation
-    for i in range(0, MaxNights):
-        # In case the alert arrives during the day, time is set to sunset
-        if (Tools.NextSunset(time, obspar).hour >= time.hour >= Tools.PreviousSunrise(
-                time, obspar).hour and time.day == Tools.NextSunset(time, obspar).day):
-            time = Tools.NextSunset(time, obspar)
-            time = Tools.TrustingDarknessSun(time, obspar)
-            isFirstNight = False
-        # in case the alert arrives during the night, the last observation night will be the fourth so MaxNights=4
-        else:
-            if (isFirstNight):
-                # MaxNights = MaxNights+1
-                MaxNights = MaxNights
-                isFirstNight = False
-        # Using Time 0 in order to define what would be a night through that goes from Time 0 to NextSunrise(Time 0)
-        time0 = time
-        for j in range(0, AuxMax):
-            # Night condition fulfilled
-            if ((time.hour >= time0.hour and time.day == time0.day) or (
-                    time.hour <= Tools.NextSunrise(time0, obspar).hour and time.day == Tools.NextSunrise(time0, obspar).day)):
-                # print('time.hour >= time0.hour and time.day == time0.day) or (time.hour <= Tools.NextSunrise(time0).hour and time.day == Tools.NextSunrise(time0).day')
-                # print(time.hour ,'   ', time0.hour,'    ', time.day ,'   ',time0.day ,'   ',time.hour ,'   ',Tools.NextSunrise(time0).hour ,'   ', time.day ,'   ', Tools.NextSunrise(time0).day)
-                # Dark and window conditions are fulfilled. Append time
-                if (Tools.IsDarkness(time, obspar) is True) and (Tools.IsDarkness(time + WindowDuration, obspar) is True):
-                    NightDarkRuns.append(time)
-                    time = time + WindowDuration
-                    # print('first IF', str(time),'isdarks',Tools.IsDarkness(time))
-                # Window condition is not fulfilled. Look if possible window is bigger that MinimalWindowDuration and if so, append time
-                if (Tools.IsDarkness(time, obspar) is True) and (Tools.IsDarkness(time + WindowDuration, obspar) is False):
-                    # print('Second  IF', str(time),'isdarks',Tools.IsDarkness(time))
-                    # REgardless of being the sunrise or the moonrise the reason of darkness(the end of the window) == False , check if minimum requirement for a wondow is fulfilled
-                    if ((MinimalWindowDuration <= (Tools.NextMoonrise(time, obspar) - time) <= WindowDuration) or MinimalWindowDuration <= (Tools.NextSunrise(time, obspar) - time) <= WindowDuration):
-                        NightDarkRuns.append(time)
-                    # print('But as darkness is not fulfilled anymore.Now its', str(time),'We jump to Nextmoonset', str(Tools.NextMoonset(time)))
-                    # print('==============================================')
-                    # print('MOON')
-                    # print("str(Tools.PreviousMoonrise(time))  str(Tools.PreviousMoonset(time))  str(Tools.NextMoonrise(time))   str(Tools.NextMoonset(time))")
-                    # print(str(Tools.PreviousMoonrise(time)),'   ',str(Tools.PreviousMoonset(time)),'  ',str(Tools.NextMoonrise(time)),'   ', str(Tools.NextMoonset(time)))
-                    # print('==============================================')
-                    # print('SUN')
-                    # print("str(Tools.PreviousSunrise(time))  str(Tools.PreviousSunset(time))  str(Tools.NextSunrise(time))   str(Tools.NextSunset(time))")
-                    # print(str(Tools.PreviousSunrise(time)), '   ', str(Tools.PreviousSunset(time)), '  ',str(Tools.NextSunrise(time)), '   ', str(Tools.NextSunset(time)))
-                    # print('==============================================')
-                    time = Tools.NextMoonset(time, obspar)
-                    time = Tools.TrustingDarknessMoon(time,
-                                                      time0, obspar)  # This case means: Night and darkness given by nextmoonset but when using IsDarkness() gives False due to decimals
-                # Dark is false
-                if (Tools.IsDarkness(time, obspar) is False) and ((time.hour >= time0.hour and time.day == time0.day) or (
-                        time.hour <= Tools.NextSunrise(time0, obspar).hour and time.day == Tools.NextSunrise(time0, obspar).day)):
-                    time = Tools.NextMoonset(time, obspar)
-                    time = Tools.TrustingDarknessMoon(time, time0, obspar)
-            # Night is over, break
-            else:
-                # print('NIGHT IS OVER/BREAK')
-                # print('time.hour >= time0.hour and time.day == time0.day) or (time.hour <= Tools.NextSunrise(time0).hour and time.day == Tools.NextSunrise(time0).day')
-                # print(time.hour ,'   ', time0.hour,'    ', time.day ,'   ',time0.day ,'   ',time.hour ,'   ',Tools.NextSunrise(time0).hour ,'   ', time.day ,'   ', Tools.NextSunrise(time0).day)
-                break
-    return NightDarkRuns
+    obs = Observatory(longitude=obspar.Lon.to_value(u.deg),
+                      latitude=obspar.Lat.to_value(u.deg),
+                      elevation=obspar.Height.to_value(u.m),
+                      run_duration=datetime.timedelta(minutes=obspar.Duration),
+                      minimal_run_duration=datetime.timedelta(minutes=obspar.MinDuration),
+                      max_sun_altitude=obspar.gSunDown,
+                      max_moon_altitude=obspar.gMoonDown,
+                      max_moon_phase=-1.0)
+    return obs.get_time_window(start_time=time,
+                               nb_observation_night=obspar.MaxNights)
 
 
 def NightDarkObservationwithGreyTime(time, obspar):
@@ -917,86 +858,16 @@ def NightDarkObservationwithGreyTime(time, obspar):
     Function that searches for an array of observation times that fulfilled darkness condition and window
 
     '''
-    MaxNights = obspar.MaxNights
-    duration = obspar.Duration
-    minduration = obspar.MinDuration
-
-    WindowDuration = datetime.timedelta(minutes=duration)
-    MinimalWindowDuration = datetime.timedelta(minutes=minduration)
-    AuxMax = 100
-    NightDarkRuns = []
-    isFirstNight = True
-    # Loop for the nights of observation
-    for i in range(0, MaxNights):
-        # In case the alert arrives during the day, time is set to sunset
-        if (Tools.NextSunset(time, obspar).hour >= time.hour >= Tools.PreviousSunrise(
-                time, obspar).hour and time.day == Tools.NextSunset(time, obspar).day):
-            time = Tools.NextSunset(time, obspar)
-            # print('POSTTIME',time,'isdarks', Tools.IsDarkness(time,obspar))
-            time = Tools.TrustingGreynessSun(time, obspar)
-            # print('POSTPOSTTIME', time, 'isdarks', Tools.IsDarkness(time,obspar))
-            isFirstNight = False
-        # in case the alert arrives during the night, the last observation night will be the fourth so MaxNights=4
-        else:
-            if (isFirstNight):
-                # MaxNights = MaxNights+1
-                MaxNights = MaxNights
-                isFirstNight = False
-        # Using Time 0 in order to define what would be a night through that goes from Time 0 to NextSunrise(Time 0)
-        time0 = time
-        for j in range(0, AuxMax):
-            # Night condition fulfilled
-            # print('Times', str(time))
-            if ((time.hour >= time0.hour and time.day == time0.day) or (
-                    time.hour <= Tools.NextSunrise(time0, obspar).hour and time.day == Tools.NextSunrise(time0, obspar).day)):
-                # print('time.hour >= time0.hour and time.day == time0.day) or (time.hour <= Tools.NextSunrise(time0).hour and time.day == Tools.NextSunrise(time0).day')
-                # print(time.hour ,'   ', time0.hour,'    ', time.day ,'   ',time0.day ,'   ',time.hour ,'   ',Tools.NextSunrise(time0).hour ,'   ', time.day ,'   ', Tools.NextSunrise(time0).day)
-                # Dark and window conditions are fulfilled. Append time
-                if (Tools.IsGreyness(time, obspar) is True) and (Tools.IsGreyness(time + WindowDuration, obspar) is True):
-                    NightDarkRuns.append(time)
-                    time = time + WindowDuration
-                    # print('first IF', str(time),'isdarks',Tools.IsDarkness(time,obspar),'is grey',Tools.IsGreyness(time,obspar))
-                # Window condition is not fulfilled. Look if possible window is bigger that MinimalWindowDuration and if so, append time
-                if (Tools.IsGreyness(time, obspar) is True) and (Tools.IsGreyness(time + WindowDuration, obspar) is False):
-                    # print('second IF', str(time),'isdarks',Tools.IsDarkness(time,obspar),'is grey',Tools.IsGreyness(time,obspar))
-                    # print(Tools.IsGreyness(time + MinimalWindowDuration,obspar))
-                    windowbool, endwind = Tools.TrustingGreynessMoon(
-                        time, time0, obspar)
-                    # print(windowbool)
-                    if windowbool:
-                        NightDarkRuns.append(time)
-                    time = endwind
-                    # REgardless of being the sunrise or the moonrise the reason of darkness(the end of the window) == False , check if minimum requirement for a wondow is fulfilled
-                    # if ((MinimalWindowDuration <= (Tools.NextMoonrise(time,obspar) - time) <= WindowDuration) or MinimalWindowDuration <= (
-                    #         Tools.NextSunrise(time,obspar) - time) <= WindowDuration):
-                    #    NightDarkRuns.append(time)
-                    # This case means: Night and darkness given by nextmoonset but when using IsDarkness() gives False due to decimals
-                    # print('But as darkness is not fulfilled anymore.Now its', str(time),'We jump to Nextmoonset', str(Tools.NextMoonset(time)))
-                    # print('==============================================')
-                    # print('MOON')
-                    # print("str(Tools.PreviousMoonrise(time))  str(Tools.PreviousMoonset(time))  str(Tools.NextMoonrise(time))   str(Tools.NextMoonset(time))")
-                    # print(str(Tools.PreviousMoonrise(time)),'   ',str(Tools.PreviousMoonset(time)),'  ',str(Tools.NextMoonrise(time)),'   ', str(Tools.NextMoonset(time)))
-                    # print('==============================================')
-                    # print('SUN')
-                    # print("str(Tools.PreviousSunrise(time))  str(Tools.PreviousSunset(time))  str(Tools.NextSunrise(time))   str(Tools.NextSunset(time))")
-                    # print(str(Tools.PreviousSunrise(time)), '   ', str(Tools.PreviousSunset(time)), '  ',str(Tools.NextSunrise(time)), '   ', str(Tools.NextSunset(time)))
-                    # print('==============================================')
-
-                    # time = Tools.NextMoonset(time,obspar)
-                # Dark is false
-                if (Tools.IsGreyness(time, obspar) is False) and ((time.hour >= time0.hour and time.day == time0.day) or (time.hour <= Tools.NextSunrise(time0, obspar).hour and time.day == Tools.NextSunrise(time0, obspar).day)):
-                    # print('IsGreyness is',Tools.IsGreyness(time,obspar))
-                    # time = Tools.NextMoonset(time,obspar)
-                    # time = Tools.TrustingDarknessMoon(time, time0,obspar)
-                    time = NextWindowTools.NextObservationWindowGrey(
-                        time, obspar)
-                    # break
-            else:
-                # print('NIGHT IS OVER/BREAK')
-                # print('time.hour >= time0.hour and time.day == time0.day) or (time.hour <= Tools.NextSunrise(time0).hour and time.day == Tools.NextSunrise(time0).day')
-                # print(time.hour ,'   ', time0.hour,'    ', time.day ,'   ',time0.day ,'   ',time.hour ,'   ',Tools.NextSunrise(time0).hour ,'   ', time.day ,'   ', Tools.NextSunrise(time0).day)
-                break
-    return NightDarkRuns
+    obs = Observatory(longitude=obspar.Lon.to_value(u.deg),
+                      latitude=obspar.Lat.to_value(u.deg),
+                      elevation=obspar.Height.to_value(u.m),
+                      run_duration=datetime.timedelta(minutes=obspar.Duration),
+                      minimal_run_duration=datetime.timedelta(minutes=obspar.MinDuration),
+                      max_sun_altitude=obspar.gSunDown,
+                      max_moon_altitude=obspar.gMoonDown,
+                      max_moon_phase=obspar.gMoonPhase/100.)
+    return obs.get_time_window(start_time=time,
+                               nb_observation_night=obspar.MaxNights)
 
 
 def ZenithAngleCut(prob, nside, time, MinProbCut, max_zenith, observatory, MoonSourceSeparation, usegreytime):
