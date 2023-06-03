@@ -263,6 +263,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
             FOLLOWUP = True
             df = SuggestedPointings.to_pandas()
             table_dict = df.to_dict()
+            table_dict["event_name"] = name
             SuggestedPointings_AstroCOLIBRI = json.dumps(table_dict)
             print()
             return SuggestedPointings_AstroCOLIBRI
