@@ -415,18 +415,19 @@ def PlotPointingsTogether(prob, time, targetCoord1, n1, targetCoord2, n2, nside,
         # plt.savefig("Pointing_Plotting_%s/PointingFOV_Comparison.png" %ObsArray)
 
 
-def PointingPlottingGWCTA(filename, ID, outDir, SuggestedPointings, FOV):
+def PointingPlottingGWCTA(filename, ID, outDir, SuggestedPointings, obspar):
 
     print()
     print('-------------------   PLOTTING SCHEDULE   --------------------')
     print()
 
+    UseObs = obspar.name
+    FOV = obspar.FOV 
     # Mask table if necesary
     maskClean = (SuggestedPointings['ObsInfo'] == 'True')
     SuggestedPointingsC = SuggestedPointings[maskClean]
     SuggestedPointingsC.remove_column('ObsInfo')
-
-    observatory = SuggestedPointingsC['Observatory'][0]
+   
     # Observatory
     if UseObs == 'South':
         observatory = CTASouthObservatory()
@@ -480,7 +481,7 @@ def PointingPlottingGWCTA(filename, ID, outDir, SuggestedPointings, FOV):
     frame = co.AltAz(obstime=converted_time[0], location=observatory.Location)
     altaz_all = skycoord.transform_to(frame)
 
-    dirName = '%s/Pointing_Plotting_%s/%s' % (dirName, ObsArray, name)
+    dirName = '%s/Pointing_Plotting_%s/%s' % (outDir, UseObs, ID)
     if not os.path.exists(dirName):
         os.makedirs(dirName)
     # path = os.path.dirname(os.path.realpath(__file__)) + '/Pointing_Plotting'

@@ -297,9 +297,9 @@ class ObservationParameters(object):
                  HorizonMoon=None, gMoonGrey=None, gMoonPhase=None, MoonSourceSeparation=None,
                  MaxMoonSourceSeparation=None, max_zenith=None, FOV=None, MaxRuns=None, MaxNights=None,
                  Duration=None, MinDuration=None, UseGreytime=None, MinSlewing=None, online=False,
-                 MinimumProbCutForCatalogue=None, MinProbCut=None, doplot=None, SecondRound=None,
+                 MinimumProbCutForCatalogue=None, MinProbCut=None, distCut=None, doplot=None, SecondRound=None,
                  FulFillReq_Percentage=None, PercentCoverage=None, ReducedNside=None, HRnside=None,
-                 Mangrove=None):
+                 Mangrove=None, url=None,ObsTime=None,datasetDir=None,galcatname=None,outDir=None,PointingsFile=None,alertType=None,LocCut=None):
 
         self.name = name
         self.Lat = Lat
@@ -332,6 +332,7 @@ class ObservationParameters(object):
         self.online = online
         self.MinimumProbCutForCatalogue = MinimumProbCutForCatalogue
         self.MinProbCut = MinProbCut
+        self.distCut = distCut
         self.doplot = doplot
         self.SecondRound = SecondRound
         self.FulFillReq_Percentage = FulFillReq_Percentage
@@ -339,6 +340,16 @@ class ObservationParameters(object):
         self.ReducedNside = ReducedNside
         self.HRnside = HRnside
         self.Mangrove = Mangrove
+
+        # Parsed args
+        self.url = url 
+        self.ObsTime = ObsTime
+        self.datasetDir = datasetDir
+        self.galcatname = galcatname
+        self.outDir = outDir
+        self.PointingsFile = PointingsFile
+        self.alertType = alertType
+        self.LocCut = LocCut
 
     def __str__(self):
         txt = ''
@@ -355,6 +366,17 @@ class ObservationParameters(object):
         txt += 'Low Resolution NSIDE: {}\n'.format(self.ReducedNside)
         # txt += '----------------------------------------------------------------------\n'.format()
         return txt
+
+    def add_parsed_args(self, url,ObsTime,datasetDir,galcatname,outDir,PointingsFile,alertType,LocCut):
+        # Parsed args in command line
+        self.url = url 
+        self.ObsTime = ObsTime 
+        self.datasetDir = datasetDir
+        self.galcatname = galcatname
+        self.outDir = outDir
+        self.PointingsFile = PointingsFile
+        self.alertType = alertType
+        self.LocCut = LocCut
 
     def from_configfile(self, filepath):
 
@@ -401,6 +423,7 @@ class ObservationParameters(object):
         self.MinimumProbCutForCatalogue = float(parser.get(
             section, 'minimumprobcutforcatalogue', fallback=0))
         self.MinProbCut = float(parser.get(section, 'minprobcut', fallback=0))
+        self.distCut = float(parser.get(section, 'distcut', fallback=0))
         self.doplot = (parser.getboolean(section, 'doplot', fallback=None))
         self.SecondRound = (parser.getboolean(
             section, 'secondround', fallback=None))
@@ -631,7 +654,7 @@ def order_inds2uniq(order, inds):
     return uniq
 
 
-def Check2Dor3D(fitsfile, filename):
+def Check2Dor3D(fitsfile, filename, distcut):
 
     distnorm = []
     tdistmean = 0
@@ -640,6 +663,7 @@ def Check2Dor3D(fitsfile, filename):
         prob, distmu, distsigma, distnorm = hp.read_map(filename,
                                                         field=range(4))
         tdistmean = fitsfile[1].header['DISTMEAN']
+        tdiststd= fitsfile[1].header['DISTSTD']
     else:
         prob = hp.read_map(fitsfile, field=range(1))
 
@@ -659,9 +683,8 @@ def Check2Dor3D(fitsfile, filename):
     if InsidePlane:
         has3D = False
 
-    if tdistmean > 150:
+    if tdistmean+2*tdiststd > distcut:
         has3D = False
-
     return prob, has3D
 
 
@@ -2629,7 +2652,6 @@ def FillSummary(outfilename, ID, doneObservations, totalPoswindow, foundFirst, n
 
 def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, typeSimu, datasetDir, outDir):
 
-    print(SuggestedPointings)
     # Where to save results
     dirNameFile = outDir + '/SummaryFile/'
     print(dirNameFile)
@@ -2654,6 +2676,9 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
     maskClean = (SuggestedPointings['ObsInfo'] == 'True')
     SuggestedPointingsC = SuggestedPointings[maskClean]
     SuggestedPointingsC.remove_column('ObsInfo')
+
+    print('Source coordinates', Source)
+    print(SuggestedPointingsC)
 
     Pointings = SkyCoord(SuggestedPointingsC['RA[deg]'], SuggestedPointingsC['DEC[deg]'], frame='fk5',
                          unit=(u.deg, u.deg))
