@@ -776,7 +776,7 @@ def Check2Dor3D(fitsfile,filename):
     if InsidePlane:
         has3D = False
 
-    if tdistmean > 150:
+    if tdistmean > 300:
         has3D = False
 
     return prob, has3D
@@ -2412,7 +2412,7 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 
 def Get90RegionPixReduced(hpxx, percentage, Nnside):
 
-    nside = 512  # size of map used for contour determination
+    nside = Nnside  # size of map used for contour determination
     hpx = hp.ud_grade(hpxx, nside_out = nside, power=-2, order_in='Nested', order_out='Nested')
 
     sort = sorted(hpx, reverse=True)
