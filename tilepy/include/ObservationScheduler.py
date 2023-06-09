@@ -139,7 +139,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
                         MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                         Duration, MinDuration, UseGreytime, MinSlewing, online,
                         MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
-                        ZenithWeighting, PercentCoverage, ReducedNside, HRnside,distcut,
+                        ZenithWeighting, percentageMOC, ReducedNside, HRnside,distcut,
                         Mangrove):
     """
     TTop level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
@@ -187,7 +187,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
                      MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                      Duration, MinDuration, UseGreytime, MinSlewing, online,
                      MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
-                     ZenithWeighting, PercentCoverage, ReducedNside, HRnside,
+                     ZenithWeighting, percentageMOC, ReducedNside, HRnside,
                      Mangrove)
 
     if has3D:

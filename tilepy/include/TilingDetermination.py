@@ -64,7 +64,7 @@ def PGWinFoV(filename, ObservationTime0, PointingFile, obspar, dirName):
 
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.PercentCoverage, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.ReducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
 
     # Add observed pixels to pixlist
@@ -633,11 +633,11 @@ def PGalinFoV_PixRegion(filename, ObservationTime0, PointingFile, galFile, obspa
 
     ###############################
 
-    # Get the RA & DEC of pixles of the pixels in an enclosed probability region (% precised by PercentCoverage).
+    # Get the RA & DEC of pixles of the pixels in an enclosed probability region (% precised by percentageMOC).
     # Reduce these RA DEC to angles in maps with smaller resolution (ReducedNside)
 
     pix_ra1, pix_dec1, area = Get90RegionPixReduced(
-        prob, obspar.PercentCoverage, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.ReducedNside)
 
     ##############################
     counter = 0
@@ -773,7 +773,7 @@ def PGWonFoV_WindowsfromIRFs(filename, InputChar, TC, parameters, dirName):
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.PercentCoverage, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.ReducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     has3D = True
     if (len(distnorm) == 0):
@@ -943,7 +943,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
 
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.PercentCoverage, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.ReducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     has3D = True
 

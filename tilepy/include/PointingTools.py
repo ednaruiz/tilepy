@@ -298,7 +298,7 @@ class ObservationParameters(object):
                  MaxMoonSourceSeparation=None, max_zenith=None, FOV=None, MaxRuns=None, MaxNights=None,
                  Duration=None, MinDuration=None, UseGreytime=None, MinSlewing=None, online=False,
                  MinimumProbCutForCatalogue=None, MinProbCut=None, distCut=None, doplot=None, SecondRound=None,
-                 ZenithWeighting=None, PercentCoverage=None, ReducedNside=None, HRnside=None,
+                 ZenithWeighting=None, percentageMOC=None, ReducedNside=None, HRnside=None,
                  Mangrove=None, url=None,ObsTime=None,datasetDir=None,galcatname=None,outDir=None,PointingsFile=None,alertType=None,LocCut=None):
 
         self.name = name
@@ -336,7 +336,7 @@ class ObservationParameters(object):
         self.doplot = doplot
         self.SecondRound = SecondRound
         self.ZenithWeighting = ZenithWeighting
-        self.PercentCoverage = PercentCoverage
+        self.percentageMOC = percentageMOC
         self.ReducedNside = ReducedNside
         self.HRnside = HRnside
         self.Mangrove = Mangrove
@@ -429,8 +429,8 @@ class ObservationParameters(object):
             section, 'secondround', fallback=None))
         self.ZenithWeighting = float(parser.get(
             section, 'zenithweighting', fallback=0))
-        self.PercentCoverage = float(parser.get(
-            section, 'PercentCoverage', fallback=0))
+        self.percentageMOC = float(parser.get(
+            section, 'percentageMOC', fallback=0))
         self.ReducedNside = int(parser.get(
             section, 'reducednside', fallback=0))
         self.HRnside = int(parser.get(section, 'hrnside', fallback=0))
@@ -441,7 +441,7 @@ class ObservationParameters(object):
                   MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                   Duration, MinDuration, UseGreytime, MinSlewing, online,
                   MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
-                  ZenithWeighting, PercentCoverage, ReducedNside, HRnside,
+                  ZenithWeighting, percentageMOC, ReducedNside, HRnside,
                   Mangrove):
 
         # observatory
@@ -479,7 +479,7 @@ class ObservationParameters(object):
         self.doplot = doplot
         self.SecondRound = SecondRound
         self.ZenithWeighting = ZenithWeighting
-        self.PercentCoverage = PercentCoverage
+        self.percentageMOC = percentageMOC
         self.ReducedNside = ReducedNside
         self.HRnside = HRnside
         self.Mangrove = Mangrove
