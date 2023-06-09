@@ -54,13 +54,10 @@ def LoadPointingsGW(tpointingFile):
     ra = np.atleast_1d(ra)
     dec = np.atleast_1d(dec)
 
-    print('time1', time1)
-    print('time2', time2)
     time = []
     for i, time1 in enumerate(time1):
         time.append(time1.split('"')[1] + ' ' + time2[i].split('"')[0])
 
-    print(time)
     ra = ra.astype(float)
     dec = dec.astype(float)
     coordinates = co.SkyCoord(ra, dec, frame='fk5', unit=(u.deg, u.deg))
@@ -87,7 +84,6 @@ def LoadPointingsGAL(tpointingFile):
             time.append((time1 + ' ' + time2).split('"')[1])
             break
     coordinates = TransformRADec(ra, dec)
-    print(Pgw)
     Pgw = Pgw.astype(float)
     Pgal = Pgal.astype(float)
     return time, coordinates, Pgw, Pgal

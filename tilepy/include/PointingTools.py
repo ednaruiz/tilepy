@@ -298,7 +298,7 @@ class ObservationParameters(object):
                  MaxMoonSourceSeparation=None, max_zenith=None, FOV=None, MaxRuns=None, MaxNights=None,
                  Duration=None, MinDuration=None, UseGreytime=None, MinSlewing=None, online=False,
                  MinimumProbCutForCatalogue=None, MinProbCut=None, distCut=None, doplot=None, SecondRound=None,
-                 FulFillReq_Percentage=None, PercentCoverage=None, ReducedNside=None, HRnside=None,
+                 ZenithWeighting=None, PercentCoverage=None, ReducedNside=None, HRnside=None,
                  Mangrove=None, url=None,ObsTime=None,datasetDir=None,galcatname=None,outDir=None,PointingsFile=None,alertType=None,LocCut=None):
 
         self.name = name
@@ -335,7 +335,7 @@ class ObservationParameters(object):
         self.distCut = distCut
         self.doplot = doplot
         self.SecondRound = SecondRound
-        self.FulFillReq_Percentage = FulFillReq_Percentage
+        self.ZenithWeighting = ZenithWeighting
         self.PercentCoverage = PercentCoverage
         self.ReducedNside = ReducedNside
         self.HRnside = HRnside
@@ -427,8 +427,8 @@ class ObservationParameters(object):
         self.doplot = (parser.getboolean(section, 'doplot', fallback=None))
         self.SecondRound = (parser.getboolean(
             section, 'secondround', fallback=None))
-        self.FulFillReq_Percentage = float(parser.get(
-            section, 'fulfillreq_percentage', fallback=0))
+        self.ZenithWeighting = float(parser.get(
+            section, 'zenithweighting', fallback=0))
         self.PercentCoverage = float(parser.get(
             section, 'PercentCoverage', fallback=0))
         self.ReducedNside = int(parser.get(
@@ -441,7 +441,7 @@ class ObservationParameters(object):
                   MaxMoonSourceSeparation, max_zenith, FOV, MaxRuns, MaxNights,
                   Duration, MinDuration, UseGreytime, MinSlewing, online,
                   MinimumProbCutForCatalogue, MinProbCut, doplot, SecondRound,
-                  FulFillReq_Percentage, PercentCoverage, ReducedNside, HRnside,
+                  ZenithWeighting, PercentCoverage, ReducedNside, HRnside,
                   Mangrove):
 
         # observatory
@@ -478,7 +478,7 @@ class ObservationParameters(object):
         self.MinProbCut = MinProbCut
         self.doplot = doplot
         self.SecondRound = SecondRound
-        self.FulFillReq_Percentage = FulFillReq_Percentage
+        self.ZenithWeighting = ZenithWeighting
         self.PercentCoverage = PercentCoverage
         self.ReducedNside = ReducedNside
         self.HRnside = HRnside
@@ -1284,7 +1284,7 @@ def VisibleAtTime(test_time, galaxies, maxz, observatory):
         return False, thisaltaz, galaxies
 
 
-def FulfillsRequirement(theseGals, maxz, FOV, FulFillReq_Percentage, UsePix):
+def FulfillsRequirement(theseGals, maxz, FOV, ZenithWeighting, UsePix):
     '''
     Apply filter criteria to visible galaxy sample and compares them to get the best option of zenith angle
 
@@ -1328,7 +1328,7 @@ def FulfillsRequirement(theseGals, maxz, FOV, FulFillReq_Percentage, UsePix):
                 mask = tmpmask
                 thisminz = minz_aux
 
-            if (cur_maxp > FulFillReq_Percentage * maxp):
+            if (cur_maxp > ZenithWeighting * maxp):
                 mask = tmpmask
                 thisminz = minz_aux
             else:

@@ -268,7 +268,6 @@ def GetObservationPeriod(inputtime0, msource, obspar, plotnumber, dirName, doplo
     else:
         Altitudes = Table([times, msourcealtazs.alt, sunaltazs.alt, moonaltazs.alt, NightsCounter],
                           names=['Time UTC', 'Alt Source', 'Alt Sun', 'AltMoon', 'NightsCounter'])
-        # print(Altitudes)
         Times = Altitudes['Time UTC']
         selection = (Altitudes['Alt Sun'] < -18.) & (Altitudes['Alt Source']
                                                      > AltitudeCut) & (Altitudes['AltMoon'] < -0.5)
@@ -499,7 +498,6 @@ def EvolutionPlot(galPointing, tname, ObsArray):
     for j in range(0, len(time)):
         selecttime = time[j].split(" ")
         hour.append(selecttime[1].split('.')[0])
-        # print(time[j])
     try:
         lasttime = datetime.datetime.strptime(
             time[len(time) - 1], '%Y-%m-%d %H:%M') + datetime.timedelta(minutes=30)
@@ -515,8 +513,6 @@ def EvolutionPlot(galPointing, tname, ObsArray):
     for i in range(0, len(ra)):
         # x = np.arange(0, len(ra), 1)
         ZENITH = GWordered['Zenith angles in steps'][i]
-        # print('ZNITHHHHH',len(galPointing['Array of zenith angles'][i]))
-        # print('x',len(x))
         x = np.arange(0, len(ZENITH), 1)
         ax.plot(x, ZENITH, label='ra:%.2f dec:%.2f- Pgw:%.3f - Pgal:%.3f ' %
                 (ra[i], dec[i], 100*pgw[i], 100*pgal[i]))

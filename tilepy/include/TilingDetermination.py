@@ -164,13 +164,13 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
         Duration = int(parser.get(section, 'Duration'))
         MinDuration = int(parser.get(section, 'MinDuration'))
         SecondRound = (parser.getboolean(section, 'SecondRound'))
-        FulFillReq_Percentage = float(parser.get(section, 'FulFillReq_Percentage'))
+        ZenithWeighting = float(parser.get(section, 'ZenithWeighting'))
 
 
     except Exception, x:
         print x
 
-    print('GWBestGalaxyParameters:', max_zenith,MaxNights,FOV, MaxRuns, probCut, MinimumProbCutForCatalogue, doplot, Duration, MinDuration, SecondRound, FulFillReq_Percentage)
+    print('GWBestGalaxyParameters:', max_zenith,MaxNights,FOV, MaxRuns, probCut, MinimumProbCutForCatalogue, doplot, Duration, MinDuration, SecondRound, ZenithWeighting)
     '''
     #########################
     max_zenith = 60
@@ -183,7 +183,7 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
     SecondRound = False
     Duration = 28
     MinDuration = 10
-    FulFillReq_Percentage = 0.75
+    ZenithWeighting = 0.75
     ####################
 
     # load galaxy catalog from local file
@@ -253,7 +253,7 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
                 # visiGals = ModifyCatalogue(visiGals, FOV, sum_dP_dV)
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, max_zenith, FOV, FulFillReq_Percentage, UsePix=False)
+                    visiGals, max_zenith, FOV, ZenithWeighting, UsePix=False)
 
                 finalGals = visiGals[mask]
                 probability = SimpleGWprob(
@@ -273,7 +273,7 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
                             # visiGals = ModifyCatalogue(visiGals, FOV, sum_dP_dV)
 
                             mask, minz = FulfillsRequirement(
-                                visiGals2, max_zenith, FOV, FulFillReq_Percentage, UsePix=False)
+                                visiGals2, max_zenith, FOV, ZenithWeighting, UsePix=False)
 
                             finalGals2 = visiGals2[mask]
                             probability = SimpleGWprob(
@@ -434,7 +434,7 @@ def PGalinFoV(filename, ObservationTime0, PointingFile, galFile, obspar, dirName
                     prob, visiGals, obspar.FOV, sum_dP_dV, nside)
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, obspar.max_zenith, obspar.FOV, obspar.FulFillReq_Percentage, UsePix=False)
+                    visiGals, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=False)
                 if obspar.UseGreytime:
                     maskgrey = FulfillsRequirementGreyObservations(
                         ObservationTime, visiGals, obspar.Location, obspar.MoonSourceSeparation)
@@ -458,7 +458,7 @@ def PGalinFoV(filename, ObservationTime0, PointingFile, galFile, obspar, dirName
                                 prob, visiGals2, obspar.FOV, sum_dP_dV, nside)
 
                             mask, minz = FulfillsRequirement(
-                                visiGals2, obspar.max_zenith, obspar.FOV, obspar.FulFillReq_Percentage, UsePix=False)
+                                visiGals2, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=False)
 
                             if obspar.UseGreytime:
                                 maskgrey = FulfillsRequirementGreyObservations(
@@ -658,7 +658,7 @@ def PGalinFoV_PixRegion(filename, ObservationTime0, PointingFile, galFile, obspa
                 visiGals = tGals_aux[visiMask]
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, obspar.max_zenith, obspar.FOV, obspar.FulFillReq_Percentage, UsePix=True)
+                    visiGals, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=True)
 
                 finalGals = visiGals[mask]
                 visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, prob, finalGals, obspar.FOV,
@@ -1177,8 +1177,8 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
         Duration = int(parser.get(section, 'Duration'))
         MinDuration = int(parser.get(section, 'MinDuration'))
         SecondRound = (parser.getboolean(section, 'SecondRound'))
-        FulFillReq_Percentage = float(
-            parser.get(section, 'FulFillReq_Percentage'))
+        ZenithWeighting = float(
+            parser.get(section, 'ZenithWeighting'))
         UseGreytime = (parser.getboolean(section, 'UseGreytime'))
 
     except Exception as x:
@@ -1186,7 +1186,7 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
 
     print('GWGalaxyProbabilityIntegrated - Parameters:', max_zenith, MaxNights, FOV, MaxRuns, probCut,
           MinimumProbCutForCatalogue, doplot,
-          Duration, MinDuration, SecondRound, FulFillReq_Percentage, dirName, UseGreytime)
+          Duration, MinDuration, SecondRound, ZenithWeighting, dirName, UseGreytime)
 
     #########################
 
@@ -1276,7 +1276,7 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
                     prob, visiGals, FOV, sum_dP_dV, nside)
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, max_zenith, FOV, FulFillReq_Percentage, UsePix=False)
+                    visiGals, max_zenith, FOV, ZenithWeighting, UsePix=False)
 
                 finalGals = visiGals[mask]
 
@@ -1294,7 +1294,7 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
                             visiGals2 = ModifyCatalogue(
                                 prob, visiGals2, FOV, sum_dP_dV, nside)
 
-                            mask, minz = FulfillsRequirement(visiGals2, max_zenith, FOV, FulFillReq_Percentage,
+                            mask, minz = FulfillsRequirement(visiGals2, max_zenith, FOV, ZenithWeighting,
                                                              UsePix=False)
 
                             finalGals2 = visiGals2[mask]
