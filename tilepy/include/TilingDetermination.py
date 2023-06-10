@@ -22,7 +22,6 @@ if six.PY2:
   ConfigParser = configparser.SafeConfigParser
 else:
   ConfigParser = configparser.ConfigParser
-
 ############################################
 
 #              General definitions              #
@@ -77,9 +76,6 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
 
     # Create table for 2D probability at 90% containment
     rapix, decpix,areapix=Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.ReducedNside)
-    radecs2 = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
-    plt.scatter(radecs2.ra.deg, radecs2.dec.deg, color = 'b')
-    plt.show()
     radecs= co.SkyCoord(rapix,decpix, frame='fk5', unit=(u.deg, u.deg))
 
     #Add observed pixels to pixlist
@@ -637,7 +633,6 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
 
     # Get the RA & DEC of pixles of the pixels in an enclosed probability region (% precised by PercentCoverage).
     # Reduce these RA DEC to angles in maps with smaller resolution (ReducedNside)
-
 
     pix_ra1, pix_dec1, area = Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.ReducedNside)
 
