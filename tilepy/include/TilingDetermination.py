@@ -22,6 +22,7 @@ if six.PY2:
   ConfigParser = configparser.SafeConfigParser
 else:
   ConfigParser = configparser.ConfigParser
+
 ############################################
 
 #              General definitions              #
@@ -76,6 +77,9 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
 
     # Create table for 2D probability at 90% containment
     rapix, decpix,areapix=Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.ReducedNside)
+    radecs2 = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
+    plt.scatter(radecs2.ra.deg, radecs2.dec.deg, color = 'b')
+    plt.show()
     radecs= co.SkyCoord(rapix,decpix, frame='fk5', unit=(u.deg, u.deg))
 
     #Add observed pixels to pixlist
@@ -559,7 +563,8 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     print()
 
     print('Loading map from ', filename)
-    prob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(filename)
+    tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(filename)
+    prob = hp.pixelfunc.ud_grade(tprob,obspar.ReducedNside,power=-2)
     npix = len(prob)
     nside = hp.npix2nside(npix)
 
@@ -573,9 +578,9 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
 
     # correlate GW map with galaxy catalog, retrieve ordered list
     if not obspar.Mangrove:
-        tGals0, sum_dP_dV = CorrelateGalaxies_LVC(prob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+        tGals0, sum_dP_dV = CorrelateGalaxies_LVC(tprob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
     else:
-        tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+        tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(tprob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
 
     alreadysumipixarray1 = []
     alreadysumipixarray2 = []
@@ -634,8 +639,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     # Reduce these RA DEC to angles in maps with smaller resolution (ReducedNside)
 
 
-    pix_ra1, pix_dec1, area = Get90RegionPixReduced(prob, obspar.PercentCoverage, obspar.ReducedNside)
-
+    pix_ra1, pix_dec1, area = Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.ReducedNside)
 
 
     ##############################
@@ -658,7 +662,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
                 mask, minz = FulfillsRequirement(visiGals, obspar.max_zenith, obspar.FOV, obspar.FulFillReq_Percentage, UsePix=True)
 
                 finalGals = visiGals[mask]
-                visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, prob, finalGals, obspar.FOV,
+                visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, tprob, finalGals, obspar.FOV,
                                              sum_dP_dV, nside, obspar.ReducedNside, minz,obspar.Location)
 
                 if (visiPix['PIXFOVPROB'][:1] > obspar.MinProbCut):
