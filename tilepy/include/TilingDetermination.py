@@ -337,8 +337,6 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
     return SuggestedPointings, cat
 
 
-def PGalinFoV(filename, ObservationTime0, PointingFile, galFile, obspar, dirName):
-
 def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
     """
     Mid-level function that is called by GetSchedule to compute a observation schedule based on a 2D method.  
