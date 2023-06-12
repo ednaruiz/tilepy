@@ -492,6 +492,17 @@ class ObservationParameters(object):
 ######################################################
 
 def getdate(x):
+
+    """
+    Bottom-level function that takes a date and prints it in ISO format
+    
+    :param x: the date to be formatted 
+    :type x: datetime
+
+    :return: none
+    rtype: none
+    """
+
     if isinstance(x, datetime.datetime):
         return x
     elif isinstance(x, str):
@@ -502,7 +513,16 @@ def getdate(x):
 
 
 def GetGBMMap(URL):
+    """
+    Bottom-level function that takes a url searches for the localisatios maps from the Fermi-GBM database, or waits until it is uplaoded. 
+    
+    :param URL: the URL of the map
+    :type URL: str
 
+    :return: fitsfile, filename
+    rtype: fits, str
+    """
+    
     filename = URL.split("/")[-1]
     filename = filename.split(".")[0]
     filename = "./maps/" + filename + ".fit"
@@ -553,6 +573,15 @@ def GetGBMMap(URL):
 
 
 def GetGWMap(URL):
+    """
+    Bottom-level function that takes a url searches for the localisatios maps from the GW database, or waits until it is uplaoded. 
+    
+    :param URL: the URL of the map
+    :type URL: str
+
+    :return: fitsfile, filename
+    rtype: fits, str
+    """
 
     filename = URL.split("/")[-1]
     print("The filename is ", filename)
@@ -582,6 +611,16 @@ def GetGWMap(URL):
 
 
 def UNIQSkymap_toNested(skymap_fname):
+    """
+    Bottom-level function that takes a skymap and computes from it the uniq map 
+    
+    :param skymap_fname: Healpix skymap
+    :type skymap_fname: Table
+
+    :return: healpix_skymaps_dict
+    rtype: dict
+    """
+
     sky_tab = Table.read(skymap_fname)
     healpix_skymaps_dict = get_lvk_uniq_maps(sky_tab, 'max')
     # prob = healpix_skymaps_dict['PROBDENSITY']
@@ -689,19 +728,26 @@ def Check2Dor3D(fitsfile, filename, distcut):
 
 
 def LoadHealpixMap(thisfilename):
-    '''Download aLIGO HEALpix map and keep in cache
-        RETURNS:
-        --------
+    """
+    Bottom-level function that downloads aLIGO HEALpix map and keep in cache. 
 
-        tprob : array of p-values as a function of sky position
-        tdistmu : array of distance estimate
-        tdistsigma : array of error on distance estimates
-        distnorm : array of distance normalisations
-        detectors: which interferometers triggered
-        event_id: ID of the event
-        distmean: mean distance from the header
-        disterr: error on distance from the header
-        '''
+    :param thisfilename: name of the fits file containing the localisation map
+    :type thisfilename: str
+
+    :return tprob, tdistmu, tdistsigma, distnorm, detectors, event_id, distmean, disterr
+    :rtype: array, array, array, array, array, str, float, foat, float, 
+    """
+    '''
+   :return tprob : array of p-values as a function of sky position
+    :return tdistmu : array of distance estimate
+    :return tdistsigma : array of error on distance estimates
+    :return distnorm : array of distance normalisations
+    :return detectors: which interferometers triggered
+    :return event_id: ID of the event
+    :return distmean: mean distance from the header
+    :return disterr: error on distance from the header
+    :rtype: array
+    '''
     PrintFileName = "Loading LVC HEALPix map from file: " + thisfilename
     print(PrintFileName)
     fitsfile = fits.open(thisfilename)
@@ -2260,9 +2306,8 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 
 def Get90RegionPixReduced(hpxx, percentage, Nnside):
 
-    nside = 512  # size of map used for contour determination
-    hpx = hp.ud_grade(hpxx, nside_out=nside, power=-2,
-                      order_in='Nested', order_out='Nested')
+    nside = Nnside  # size of map used for contour determination
+    hpx = hp.ud_grade(hpxx, nside_out = nside, power=-2, order_in='Nested', order_out='Nested')
 
     sort = sorted(hpx, reverse=True)
     cumsum = np.cumsum(sort)

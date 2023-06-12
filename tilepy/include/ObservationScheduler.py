@@ -142,11 +142,11 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
                         ZenithWeighting, percentageMOC, ReducedNside, HRnside,distcut,
                         Mangrove):
     """
-    TTop level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
-
-    :param URL: the url of the probability fits or  png map
+    Top-level function that is called by the user with specific arguments and creates a folder with the tiling schedules for a single telescope and visibility plots.  
+    
+    :param URL: The url of the probability fits or  png map
     :type URL: str
-    :param date: the desired time for scheduling to start 
+    :param date: yhe desired time for scheduling to start 
     :type date: str
     :param datasetDir: Path to the directory containting the datset like the galaxy catalog
     :type datasetDir: str
