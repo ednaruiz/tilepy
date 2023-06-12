@@ -611,8 +611,8 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     print()
 
     print('Loading map from ', filename)
-    prob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(
-        filename)
+    tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(filename)
+    prob = hp.pixelfunc.ud_grade(tprob,obspar.ReducedNside,power=-2)
     npix = len(prob)
     nside = hp.npix2nside(npix)
 
@@ -626,11 +626,9 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
 
     # correlate GW map with galaxy catalog, retrieve ordered list
     if not obspar.Mangrove:
-        tGals0, sum_dP_dV = CorrelateGalaxies_LVC(
-            prob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+        tGals0, sum_dP_dV = CorrelateGalaxies_LVC(tprob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
     else:
-        tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(
-            prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+        tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(tprob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
 
     alreadysumipixarray1 = []
     alreadysumipixarray2 = []
@@ -688,8 +686,8 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     # Get the RA & DEC of pixles of the pixels in an enclosed probability region (% precised by percentageMOC).
     # Reduce these RA DEC to angles in maps with smaller resolution (ReducedNside)
 
-    pix_ra1, pix_dec1, area = Get90RegionPixReduced(
-        prob, obspar.percentageMOC, obspar.ReducedNside)
+    pix_ra1, pix_dec1, area = Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.ReducedNside)
+
 
     ##############################
     counter = 0
@@ -713,8 +711,8 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
                     visiGals, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=True)
 
                 finalGals = visiGals[mask]
-                visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, prob, finalGals, obspar.FOV,
-                                             sum_dP_dV, nside, obspar.ReducedNside, minz, obspar.Location)
+                visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, tprob, finalGals, obspar.FOV,
+                                             sum_dP_dV, nside, obspar.ReducedNside, minz,obspar.Location)
 
                 if (visiPix['PIXFOVPROB'][:1] > obspar.MinProbCut):
                     n = n + 1
