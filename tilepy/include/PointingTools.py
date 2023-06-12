@@ -697,6 +697,7 @@ def Check2Dor3D(fitsfile, filename, distcut):
 
     distnorm = []
     tdistmean = 0
+    tdiststd = 0
     fitsfile = fits.open(filename)
     if (fitsfile[1].header['TFIELDS'] == 4):
         prob, distmu, distsigma, distnorm = hp.read_map(filename,
