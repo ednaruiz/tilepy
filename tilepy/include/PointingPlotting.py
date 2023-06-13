@@ -119,7 +119,7 @@ def PointingPlotting(prob, obspar, name, dirName, PointingsFile1, ObsArray, file
                     converted_time1.append(time1)
                     # converted_time1 = str(converted_time1).split('+')[0]
                     # converted_time1.append(datetime.datetime.strptime(time1, '%Y-%m-%d %H:%M:%S'))
-    # PlotPointingsTogether(prob,converted_time1[0],Coordinates1,sum(Probarray1),name1,Coordinates2,sum(Probarray2),name2, nside, obspar.FOV, doplot=True)
+    # PlotPointingsTogether(prob,converted_time1[0],Coordinates1,sum(Probarray1),name1,Coordinates2,sum(Probarray2),name2, nside, obspar.FOV, doPlot=True)
     PlotPointings(prob, converted_time1, Coordinates1, sum(
         Probarray1), nside, obspar, name, dirName, ObsArray)
     # PlotPointings_Pretty(filename, obspar.name, PointingsFile1, dirName)
@@ -127,8 +127,8 @@ def PointingPlotting(prob, obspar, name, dirName, PointingsFile1, ObsArray, file
 
 def PlotPointings(prob, time, targetCoord, Totalprob, nside, obspar, name, dirName, ObsArray):
     FOV = obspar.FOV
-    maxzenith = obspar.max_zenith
-    doplot = obspar.doplot
+    maxzenith = obspar.maxZenith
+    doPlot = obspar.doPlot
 
     t = 0.5 * np.pi - targetCoord[0].dec.rad
     p = targetCoord[0].ra.rad
@@ -138,14 +138,14 @@ def PlotPointings(prob, time, targetCoord, Totalprob, nside, obspar, name, dirNa
     # translate pixel indices to coordinates
     ipix_disc = hp.query_disc(nside, xyz, np.deg2rad(FOV))
     print(time)
-    if (doplot):
+    if (doPlot):
 
         tt, pp = hp.pix2ang(nside, ipix_disc)
         ra2 = np.rad2deg(pp)
         dec2 = np.rad2deg(0.5 * np.pi - tt)
 
         skycoord = co.SkyCoord(ra2, dec2, frame='fk5', unit=(u.deg, u.deg))
-        observatory = obspar.Location
+        observatory = obspar.location
         frame = co.AltAz(obstime=time[0], location=observatory)
         altaz_all = skycoord.transform_to(frame)
 
@@ -331,7 +331,7 @@ def PlotPointings(prob, time, targetCoord, Totalprob, nside, obspar, name, dirNa
         '''
 
 
-def PlotPointingsTogether(prob, time, targetCoord1, n1, targetCoord2, n2, nside, FOV, doplot=True):
+def PlotPointingsTogether(prob, time, targetCoord1, n1, targetCoord2, n2, nside, FOV, doPlot=True):
 
     t = 0.5 * np.pi - targetCoord1[0].dec.rad
     p = targetCoord1[0].ra.rad
@@ -346,7 +346,7 @@ def PlotPointingsTogether(prob, time, targetCoord1, n1, targetCoord2, n2, nside,
 
     ipix_disc = hp.query_disc(nside, xyz, np.deg2rad(FOV))
 
-    if (doplot):
+    if (doPlot):
 
         tt, pp = hp.pix2ang(nside, ipix_disc)
         ra2 = np.rad2deg(pp)
@@ -460,7 +460,7 @@ def PointingPlottingGWCTA(filename, ID, outDir, SuggestedPointings, obspar):
                 converted_time.append(
                     datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S'))
 
-    # PlotPointings(prob,cat,converted_time,Coordinates,sum(Probarray), nside, FOV, name, dirName, doplot=True)
+    # PlotPointings(prob,cat,converted_time,Coordinates,sum(Probarray), nside, FOV, name, dirName, doPlot=True)
 
     t = 0.5 * np.pi - Coordinates[0].dec.rad
     p = Coordinates[0].ra.rad
@@ -474,7 +474,7 @@ def PointingPlottingGWCTA(filename, ID, outDir, SuggestedPointings, obspar):
 
     skycoord = co.SkyCoord(ra2, dec2, frame='fk5', unit=(u.deg, u.deg))
 
-    frame = co.AltAz(obstime=converted_time[0], location=observatory.Location)
+    frame = co.AltAz(obstime=converted_time[0], location=observatory.location)
     altaz_all = skycoord.transform_to(frame)
 
     dirName = '%s/Pointing_Plotting_%s/%s' % (outDir, UseObs, ID)
@@ -569,22 +569,22 @@ def PointingPlottingGW_ZenithSteps(filename, name, dirName, FOV, InputTimeObs, O
 
     # skycoord = co.SkyCoord(ra2, dec2, frame='fk5', unit=(u.deg, u.deg))
 
-    # frame = co.AltAz(obstime=converted_time, location=observatory.Location)
+    # frame = co.AltAz(obstime=converted_time, location=observatory.location)
     # altaz_all = skycoord.transform_to(frame)
 
     dirName = '%s/Pointing_Plotting_%s/%s' % (dirName, ObsArray, name)
     if not os.path.exists(dirName):
         os.makedirs(dirName)
 
-    max_zenith = 45
+    maxZenith = 45
     hp.mollview(prob)
     for i in range(0, 6):
         altcoord = np.empty(2500-200*i)
         azcoord = np.random.rand(2500-200*i) * 360
-        altcoord.fill(max_zenith+5*i)
-        print(max_zenith+5*i)
+        altcoord.fill(maxZenith+5*i)
+        print(maxZenith+5*i)
         RandomCoord = co.SkyCoord(azcoord, altcoord, frame='altaz', unit=(
-            u.deg, u.deg), obstime=time, location=observatory.Location)
+            u.deg, u.deg), obstime=time, location=observatory.location)
         RandomCoord_radec = RandomCoord.transform_to('fk5')
         hp.visufunc.projplot(RandomCoord_radec.ra,
                              RandomCoord_radec.dec, lonlat=True)

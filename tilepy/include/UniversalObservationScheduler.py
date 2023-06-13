@@ -31,7 +31,7 @@ utc = pytz.UTC
 ############################################
 
 
-def ObservationStartperObs(ObsArray, ObsParameters, ObservationTime0):
+def ObservationStartperObs(ObsArray, obsparameters, ObservationTime0):
     # Finding the start time for each observatory and checking if it's now
     FirstDark = np.full(len(ObsArray), False, dtype=bool)
     FirstDark_Flag = np.full(len(ObsArray), False, dtype=bool)
@@ -46,10 +46,10 @@ def ObservationStartperObs(ObsArray, ObsParameters, ObservationTime0):
 
         dark_at_start = False
 
-        if ObsParameters[j].UseGreytime:
-            dark_at_start = Tools.CheckWindowGrey(obs_time, ObsParameters[j])
-        if not ObsParameters[j].UseGreytime:
-            dark_at_start = Tools.CheckWindow(obs_time, ObsParameters[j])
+        if obsparameters[j].useGreytime:
+            dark_at_start = Tools.CheckWindowGrey(obs_time, obsparameters[j])
+        if not obsparameters[j].useGreytime:
+            dark_at_start = Tools.CheckWindow(obs_time, obsparameters[j])
         FirstDark[j] = dark_at_start
 
         # THIS WILL CREATE A DATETIME OBJECT WITH IN THE FORM XX+00:00 WITH NO DOTS
@@ -59,13 +59,13 @@ def ObservationStartperObs(ObsArray, ObsParameters, ObservationTime0):
                 obs_time = utc.localize(obs_time)
             ObsFirstTime.append(obs_time)
         else:  # THIS WILL CREATE A DATETIME OBJECT WITH IN THE FORM .XX+00:00
-            if ObsParameters[j].UseGreytime:
+            if obsparameters[j].useGreytime:
                 ObsFirstTime1 = NextWindowTools.NextObservationWindowGrey(
-                    time=obs_time, obsPar=ObsParameters[j])
+                    time=obs_time, obspar=obsparameters[j])
                 ObsFirstTime.append(ObsFirstTime1)
-            if not ObsParameters[j].UseGreytime:
+            if not obsparameters[j].useGreytime:
                 ObsFirstTime1 = NextWindowTools.NextObservationWindow(
-                    time=obs_time, obsPar=ObsParameters[j])
+                    time=obs_time, obspar=obsparameters[j])
                 ObsFirstTime.append(ObsFirstTime1)
             if ObsFirstTime1 != False:
                 if ObsFirstTime1.tzinfo is None:
@@ -87,7 +87,7 @@ def ObservationStartperObs(ObsArray, ObsParameters, ObservationTime0):
             if ObsFirstTime[j].tzinfo is None:
                 ObsFirstTime = utc.localize(ObsFirstTime[j])
             ActiveObsStart.append(ObsFirstTime[j])
-            ActiveObs.append(ObsParameters[j])
+            ActiveObs.append(obsparameters[j])
             SameNight[j] = True
         j += 1
 
@@ -101,10 +101,10 @@ def ObservationStartperObs(ObsArray, ObsParameters, ObservationTime0):
     return obs_time, SameNight, NewActiveObs, NewActiveObsStart
 
 
-def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName, ObsArray, ObsParameters):
+def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName, ObsArray, obsparameters):
 
     obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(
-        ObsArray, ObsParameters, ObservationTime0)
+        ObsArray, obsparameters, ObservationTime0)
 
     # START
 #################################################################################################################################################
@@ -121,22 +121,22 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
     Round = []
     ObsName = []
 #################################################################################################################################################
-    obspar = ObsParameters[0]
+    obspar = obsparameters[0]
     tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(
         filename)
-    prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
-    nside = obspar.ReducedNside
+    prob = hp.pixelfunc.ud_grade(tprob, obspar.reducedNside, power=-2)
+    nside = obspar.reducedNside
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.PercentCoverage, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.reducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     # Add observed pixels to pixlist
     if (PointingsFile == 'False'):
         print('No pointings were given to be substracted')
     else:
         pixlist, P_GW = SubstractPointings2D(
-            PointingsFile, prob, obspar.ReducedNside, obspar.FOV, pixlist)
+            PointingsFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
         print('Already observed probability =', P_GW)
 #################################################################################################################################################
     ITERATION_OBS = 0
@@ -164,20 +164,20 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
             ITERATION_OBS += 1
 
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
-                ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.MinProbCut,
-                                                obspar.max_zenith, obspar.Location, obspar.MoonSourceSeparation, obspar.UseGreytime)
+                ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
+                                                obspar.maxZenith, obspar.location, obspar.moonSourceSeparation, obspar.useGreytime)
                 if ObsBool:
                     # Round 1
-                    P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.ReducedNside, obspar.HRnside, obspar.MinProbCut, ObservationTime,
-                                                                         obspar.Location, obspar.max_zenith, obspar.FOV, name, pixlist, ipixlistHR, counter, dirName, obspar.UseGreytime, obspar.doplot)
+                    P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
+                                                                         obspar.location, obspar.maxZenith, obspar.FOV, name, pixlist, ipixlistHR, counter, dirName, obspar.useGreytime, obspar.doPlot)
                     # print(P_GW, obspar.name)
-                    if ((P_GW <= obspar.MinProbCut) and obspar.SecondRound):
+                    if ((P_GW <= obspar.minProbcut) and obspar.secondRound):
                         # Try Round 2
-                        # print('The minimum probability cut being', MinProbCut * 100, '% is, unfortunately, not reached.')
+                        # print('The minimum probability cut being', minProbcut * 100, '% is, unfortunately, not reached.')
                         yprob1 = highres
-                        P_GW, TC, pixlist1, ipixlistHR1 = ComputeProbability2D(prob, yprob1, radecs, obspar.ReducedNside, obspar.HRnside, obspar.MinProbCut, ObservationTime,
-                                                                               obspar.Location, obspar.max_zenith, obspar.FOV, name, pixlist1, ipixlistHR1, counter, dirName, obspar.UseGreytime, obspar.doplot)
-                        if ((P_GW <= obspar.MinProbCut)):
+                        P_GW, TC, pixlist1, ipixlistHR1 = ComputeProbability2D(prob, yprob1, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
+                                                                               obspar.location, obspar.maxZenith, obspar.FOV, name, pixlist1, ipixlistHR1, counter, dirName, obspar.useGreytime, obspar.doPlot)
+                        if ((P_GW <= obspar.minProbcut)):
                             print('Fail')
                         else:
                             Round.append(2)
@@ -201,7 +201,7 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
                             ObsName.append(obspar.name)
                             counter = counter + 1
 
-                    elif (P_GW >= obspar.MinProbCut):
+                    elif (P_GW >= obspar.minProbcut):
                         Round.append(1)
                         P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
                         RAarray.append(
@@ -223,15 +223,15 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
 
                 # HERE WE DETERMINE THE OBSERVATION DURATION ... FOR NOW WE USE 30 MINS FOR ALL
                 NewActiveObsTime[j] = NewActiveObsTime[j] + \
-                    datetime.timedelta(minutes=obspar.Duration)
+                    datetime.timedelta(minutes=obspar.duration)
 
                 # HERE WE DETERMINE IF WE ARE STILL IN THE SAME NIGHT FOR THIS OBSERVATORY
                 # if (NewActiveObsTime[j] > Tools.NextSunrise(obsstart, obspar)) | (obsstart > Tools.NextMoonrise(obsstart, obspar)):
 
-                if not ObsParameters[j].UseGreytime:
+                if not obsparameters[j].useGreytime:
                     if not Tools.CheckWindow(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
-                if ObsParameters[j].UseGreytime:
+                if obsparameters[j].useGreytime:
                     if not Tools.CheckWindowGrey(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
 
@@ -249,13 +249,13 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
     SuggestedPointings = Table([ObservationTimearray, RAarray, DECarray, P_GWarray, Round, ObsName], names=[
                                'Observation Time UTC', 'RA(deg)', 'DEC(deg)', 'PGW', 'Round', 'ObsName'])
 
-    return SuggestedPointings, ObsParameters
+    return SuggestedPointings, obsparameters
 
 
-def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters, dirName, ObsArray, ObsParameters):
+def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters, dirName, ObsArray, obsparameters):
 
     obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(
-        ObsArray, ObsParameters, ObservationTime0)
+        ObsArray, obsparameters, ObservationTime0)
 
     # START
 #################################################################################################################################################
@@ -272,7 +272,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
     ObsName = []
     has3D = True
 #################################################################################################################################################
-    obspar = ObsParameters[0]
+    obspar = obsparameters[0]
     print('Loading map from ', filename)
     prob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(
         filename)
@@ -280,19 +280,19 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
     nside = hp.npix2nside(npix)
 
     # load galaxy catalogue
-    if not obspar.Mangrove:
+    if not obspar.mangrove:
         cat = LoadGalaxies(galFile)
     else:
         cat = LoadGalaxies_SteMgal(galFile)
     print('done loading galaxies')
 
     # correlate GW map with galaxy catalog, retrieve ordered list
-    if not obspar.Mangrove:
+    if not obspar.mangrove:
         tGals0, sum_dP_dV = CorrelateGalaxies_LVC(
-            prob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+            prob, distmu, distsigma, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
     else:
         tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(
-            prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+            prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
 
     # Add observed pixels to pixlist
     if (PointingFile == 'False'):
@@ -302,7 +302,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
         # tGals_aux = tGals
         ra, dec, tGals, AlreadyObservedPgw, AlreadyObservedPgal, alreadysumipixarray1 = SubstractPointings(
             PointingFile, tGals0, alreadysumipixarray1, sum_dP_dV, obspar.FOV, prob, nside)
-        MaxRuns = obspar.MaxRuns - len(ra)
+        maxRuns = obspar.maxRuns - len(ra)
         sumPGW = sum(AlreadyObservedPgw)
         sumPGAL = sum(AlreadyObservedPgal)
 
@@ -336,52 +336,52 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
 
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
                 visible, altaz, tGals_aux = VisibleAtTime(
-                    ObservationTime, tGals_aux, obspar.max_zenith, obspar.Location)
+                    ObservationTime, tGals_aux, obspar.maxZenith, obspar.location)
 
                 if (visible):
 
                     # select galaxies within the slightly enlarged visiblity window
                     visiMask = altaz.alt.value > 90 - \
-                        (obspar.max_zenith+obspar.FOV)
+                        (obspar.maxZenith+obspar.FOV)
                     visiGals = tGals_aux[visiMask]
                     visiGals = ModifyCatalogue(
                         prob, visiGals, obspar.FOV, sum_dP_dV, nside)
 
                     mask, minz = FulfillsRequirement(
-                        visiGals, obspar.max_zenith, obspar.FOV, obspar.FulFillReq_Percentage, UsePix=False)
-                    if obspar.UseGreytime:
+                        visiGals, obspar.maxZenith, obspar.FOV, obspar.zenithWeighting, UsePix=False)
+                    if obspar.useGreytime:
                         maskgrey = FulfillsRequirementGreyObservations(
-                            ObservationTime, visiGals, obspar.Location, obspar.MoonSourceSeparation)
+                            ObservationTime, visiGals, obspar.location, obspar.moonSourceSeparation)
                         finalGals = visiGals[mask & maskgrey]
-                    if not obspar.UseGreytime:
+                    if not obspar.useGreytime:
                         finalGals = visiGals[mask]
 
-                    if (finalGals['dp_dV_FOV'][:1] > obspar.MinProbCut):
+                    if (finalGals['dp_dV_FOV'][:1] > obspar.minProbcut):
                         # final galaxies within the FoV
                         # This notes LIGOVirgo type of signal
-                        if ((finalGals['dp_dV_FOV'][:1] < (2 * obspar.MinProbCut)) and (sum(P_GWarray) > 0.40) and obspar.SecondRound):
+                        if ((finalGals['dp_dV_FOV'][:1] < (2 * obspar.minProbcut)) and (sum(P_GWarray) > 0.40) and obspar.secondRound):
                             print('probability', finalGals['dp_dV_FOV'][:1])
                             visible, altaz, tGals_aux2 = VisibleAtTime(
-                                ObservationTime, tGals_aux2, obspar.max_zenith, obspar.Location)
+                                ObservationTime, tGals_aux2, obspar.maxZenith, obspar.location)
                             if (visible):
                                 visiMask = altaz.alt.value > 90 - \
-                                    (obspar.max_zenith + obspar.FOV)
+                                    (obspar.maxZenith + obspar.FOV)
                                 visiGals2 = tGals_aux2[visiMask]
                                 visiGals2 = ModifyCatalogue(
                                     prob, visiGals2, obspar.FOV, sum_dP_dV, nside)
 
                                 mask, minz = FulfillsRequirement(
-                                    visiGals2, obspar.max_zenith, obspar.FOV, obspar.FulFillReq_Percentage, UsePix=False)
+                                    visiGals2, obspar.maxZenith, obspar.FOV, obspar.zenithWeighting, UsePix=False)
 
-                                if obspar.UseGreytime:
+                                if obspar.useGreytime:
                                     maskgrey = FulfillsRequirementGreyObservations(
-                                        ObservationTime, visiGals2, obspar.Location, obspar.MoonSourceSeparation)
+                                        ObservationTime, visiGals2, obspar.location, obspar.moonSourceSeparation)
                                     finalGals2 = visiGals2[mask & maskgrey]
-                                if not obspar.UseGreytime:
+                                if not obspar.useGreytime:
                                     finalGals2 = visiGals2[mask]
 
                                 p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(
-                                    prob, ObservationTime, obspar.Location, finalGals2, False, visiGals2, tGals_aux2, sum_dP_dV, alreadysumipixarray2, nside, minz, obspar.max_zenith, obspar.FOV, counter, name, dirName, obspar.doplot)
+                                    prob, ObservationTime, obspar.location, finalGals2, False, visiGals2, tGals_aux2, sum_dP_dV, alreadysumipixarray2, nside, minz, obspar.maxZenith, obspar.FOV, counter, name, dirName, obspar.doPlot)
 
                                 RAarray.append(float('{:3.4f}'.format(
                                     float(finalGals2['RAJ2000'][:1]))))
@@ -395,7 +395,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
                             # print("=================================")
                             # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                             p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(
-                                prob, ObservationTime, obspar.Location, finalGals, False, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, obspar.max_zenith, obspar.FOV, counter, name, dirName, obspar.doplot)
+                                prob, ObservationTime, obspar.location, finalGals, False, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, obspar.maxZenith, obspar.FOV, counter, name, dirName, obspar.doPlot)
                             RAarray.append(float('{:3.4f}'.format(
                                 float(finalGals['RAJ2000'][:1]))))
                             DECarray.append(float('{:3.4f}'.format(
@@ -422,18 +422,18 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
                         # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                         print(finalGals['dp_dV_FOV'][:1])
                         print("NOT passing the cut on dp_dV_FOV > ",
-                              obspar.MinProbCut)
+                              obspar.minProbcut)
 
                 # HERE WE DETERMINE THE OBSERVATION DURATION ... FOR NOW WE USE 30 MINS FOR ALL
                 NewActiveObsTime[j] = NewActiveObsTime[j] + \
-                    datetime.timedelta(minutes=obspar.Duration)
+                    datetime.timedelta(minutes=obspar.duration)
 
                 # HERE WE DETERMINE IF WE ARE STILL IN THE SAME NIGHT FOR THIS OBSERVATORY
                 # if (NewActiveObsTime[j] > Tools.NextSunrise(NewActiveObsStart[j], NewActiveObs[j])) | (NewActiveObsStart[j] > Tools.NextMoonrise(obs_time, NewActiveObs[j])):
-                if not ObsParameters[j].UseGreytime:
+                if not obsparameters[j].useGreytime:
                     if not Tools.CheckWindow(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
-                if ObsParameters[j].UseGreytime:
+                if obsparameters[j].useGreytime:
                     if not Tools.CheckWindowGrey(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
 
@@ -450,14 +450,14 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
 
     SuggestedPointings = Table([ObservationTimearray, RAarray, DECarray, P_GWarray, P_GALarray, Round, ObsName], names=[
                                'Observation Time UTC', 'RA(deg)', 'DEC(deg)', 'PGW', 'Pgal', 'Round', 'ObsName'])
-    return SuggestedPointings, cat, ObsParameters
+    return SuggestedPointings, cat, obsparameters
 
 
 def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, parameters, dirName, ObsArray):
 
     # TODO: Modify this.. NOT WORKING
     obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(
-        ObsArray, ObsParameters, ObservationTime0)
+        ObsArray, obsparameters, ObservationTime0)
 
     # START
     #################################################################################################################################################
@@ -474,22 +474,22 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
     Round = []
     ObsName = []
     #################################################################################################################################################
-    obspar = ObsParameters[0]
+    obspar = obsparameters[0]
     tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(
         filename)
-    prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
-    nside = obspar.ReducedNside
+    prob = hp.pixelfunc.ud_grade(tprob, obspar.reducedNside, power=-2)
+    nside = obspar.reducedNside
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.PercentCoverage, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.reducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     # Add observed pixels to pixlist
     if (PointingsFile == 'False'):
         print('No pointings were given to be substracted')
     else:
         pixlist, P_GW = SubstractPointings2D(
-            PointingsFile, prob, obspar.ReducedNside, obspar.FOV, pixlist)
+            PointingsFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
         print('Already observed probability =', P_GW)
     #################################################################################################################################################
     ITERATION_OBS = 0
@@ -519,29 +519,29 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
             ITERATION_OBS += 1
 
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
-                ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.MinProbCut, obspar.max_zenith,
-                                                obspar.Location, obspar.MoonSourceSeparation, obspar.UseGreytime)
+                ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut, obspar.maxZenith,
+                                                obspar.location, obspar.moonSourceSeparation, obspar.useGreytime)
                 if ObsBool:
                     # Round 1
-                    P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.ReducedNside,
-                                                                         obspar.HRnside, obspar.MinProbCut,
-                                                                         ObservationTime, obspar.Location,
-                                                                         obspar.max_zenith, obspar.FOV, name, pixlist,
+                    P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside,
+                                                                         obspar.HRnside, obspar.minProbcut,
+                                                                         ObservationTime, obspar.location,
+                                                                         obspar.maxZenith, obspar.FOV, name, pixlist,
                                                                          ipixlistHR, counter, dirName,
-                                                                         obspar.UseGreytime, obspar.doplot)
+                                                                         obspar.useGreytime, obspar.doPlot)
                     # print(P_GW, obspar.name)
-                    if ((P_GW <= obspar.MinProbCut) and obspar.SecondRound):
+                    if ((P_GW <= obspar.minProbcut) and obspar.secondRound):
                         # Try Round 2
-                        # print('The minimum probability cut being', MinProbCut * 100, '% is, unfortunately, not reached.')
+                        # print('The minimum probability cut being', minProbcut * 100, '% is, unfortunately, not reached.')
                         yprob1 = highres
                         P_GW, TC, pixlist1, ipixlistHR1 = ComputeProbability2D(prob, yprob1, radecs, nside,
-                                                                               obspar.ReducedNside, obspar.HRnside,
-                                                                               obspar.PercentCoverage, ObservationTime,
-                                                                               obspar.Location, obspar.max_zenith,
+                                                                               obspar.reducedNside, obspar.HRnside,
+                                                                               obspar.percentageMOC, ObservationTime,
+                                                                               obspar.location, obspar.maxZenith,
                                                                                obspar.FOV, name, pixlist1, ipixlistHR1,
-                                                                               counter, dirName, obspar.UseGreytime,
-                                                                               obspar.doplot)
-                        if ((P_GW <= obspar.MinProbCut)):
+                                                                               counter, dirName, obspar.useGreytime,
+                                                                               obspar.doPlot)
+                        if ((P_GW <= obspar.minProbcut)):
                             print('Fail')
                         else:
                             Round.append(2)
@@ -564,7 +564,7 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
                             ObsName.append(obspar.name)
                             counter = counter + 1
 
-                    elif (P_GW >= obspar.MinProbCut):
+                    elif (P_GW >= obspar.minProbcut):
                         Round.append(1)
                         P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
                         RAarray.append(
@@ -586,14 +586,14 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
 
                 # HERE WE DETERMINE THE OBSERVATION DURATION ... FOR NOW WE USE 30 MINS FOR ALL
                 NewActiveObsTime[j] = NewActiveObsTime[j] + \
-                    datetime.timedelta(minutes=obspar.Duration)
+                    datetime.timedelta(minutes=obspar.duration)
 
                 # HERE WE DETERMINE IF WE ARE STILL IN THE SAME NIGHT FOR THIS OBSERVATORY
                 # if (NewActiveObsTime[j] > Tools.NextSunrise(NewActiveObsStart[j], NewActiveObs[j])) | (NewActiveObsStart[j] > Tools.NextMoonrise(obs_time, NewActiveObs[j])):
-                if not ObsParameters[j].UseGreytime:
+                if not obsparameters[j].useGreytime:
                     if not Tools.CheckWindow(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
-                if ObsParameters[j].UseGreytime:
+                if obsparameters[j].useGreytime:
                     if not Tools.CheckWindowGrey(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
 
@@ -611,4 +611,4 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
     SuggestedPointings = Table([ObservationTimearray, RAarray, DECarray, P_GWarray, Round, ObsName],
                                names=['Observation Time UTC', 'RA(deg)', 'DEC(deg)', 'PGW', 'Round', 'ObsName'])
 
-    return SuggestedPointings, ObsParameters
+    return SuggestedPointings, obsparameters

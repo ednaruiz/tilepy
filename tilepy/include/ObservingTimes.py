@@ -63,7 +63,7 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
     # tslew=30 #talert should include initial slewing
     tslewbtwn = 10
 
-    # frame = co.AltAz(obstime=tAlert, location=observatory.Location)
+    # frame = co.AltAz(obstime=tAlert, location=observatory.location)
     # targetCoord_map = co.SkyCoord(targetCoor.ra, targetCoor.dec, frame='fk5', unit=(u.deg, u.deg))
     # altaz = targetCoord_map.transform_to(frame)
     # altitude=altaz.alt.deg
@@ -310,7 +310,7 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
 
     # tslew=30
 
-    # frame = co.AltAz(obstime=tAlert, location=observatory.Location)
+    # frame = co.AltAz(obstime=tAlert, location=observatory.location)
     # targetCoord_map = co.SkyCoord(targetCoor.ra, targetCoor.dec, frame='fk5', unit=(u.deg, u.deg))
     # altaz = targetCoord_map.transform_to(frame)
     # altitude=altaz.alt.deg

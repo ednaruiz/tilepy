@@ -70,14 +70,14 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
     print('Loading map from ', filename)
     tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(
         filename)
-    prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
-    nside = obspar.ReducedNside
+    prob = hp.pixelfunc.ud_grade(tprob, obspar.reducedNside, power=-2)
+    nside = obspar.reducedNside
 
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
 
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.percentageMOC, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.reducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
 
     # Add observed pixels to pixlist
@@ -85,13 +85,13 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
         print('No pointings were given to be substracted')
     else:
         pixlist, P_GW = SubstractPointings2D(
-            PointingFile, prob, obspar.ReducedNside, obspar.FOV, pixlist)
+            PointingFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
         print('Already observed probability =', P_GW)
 
     #######################################################
 
     print('----------   NEW FOLLOW-UP ATTEMPT   ----------')
-    if (obspar.UseGreytime):
+    if (obspar.useGreytime):
         NightDarkRuns = NightDarkObservationwithGreyTime(
             ObservationTime0, obspar)
 
@@ -100,21 +100,21 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
 
     counter = 0
     for j, NightDarkRun in enumerate(NightDarkRuns):
-        if (len(ObservationTimearray) < obspar.MaxRuns):
+        if (len(ObservationTimearray) < obspar.maxRuns):
             ObservationTime = NightDarkRun
-            ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.MinProbCut,
-                                            obspar.max_zenith, obspar.Location, obspar.MoonSourceSeparation, obspar.UseGreytime)
+            ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
+                                            obspar.maxZenith, obspar.location, obspar.moonSourceSeparation, obspar.useGreytime)
             if ObsBool:
                 # Round 1
-                P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.ReducedNside, obspar.HRnside, obspar.MinProbCut, ObservationTime,
-                                                                     obspar.Location, obspar.max_zenith, obspar.FOV, name, pixlist, ipixlistHR, counter, dirName, obspar.UseGreytime, obspar.doplot)
-                if ((P_GW <= obspar.MinProbCut) and obspar.SecondRound):
+                P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
+                                                                     obspar.location, obspar.maxZenith, obspar.FOV, name, pixlist, ipixlistHR, counter, dirName, obspar.useGreytime, obspar.doPlot)
+                if ((P_GW <= obspar.minProbcut) and obspar.secondRound):
                     # Try Round 2
-                    # print('The minimum probability cut being', MinProbCut * 100, '% is, unfortunately, not reached.')
+                    # print('The minimum probability cut being', minProbcut * 100, '% is, unfortunately, not reached.')
                     yprob1 = highres
-                    P_GW, TC, pixlist1, ipixlistHR1 = ComputeProbability2D(prob, yprob1, radecs, obspar.ReducedNside, obspar.HRnside, obspar.MinProbCut, ObservationTime,
-                                                                           obspar.Location, obspar.max_zenith, obspar.FOV, name, pixlist1, ipixlistHR1, counter, dirName, obspar.UseGreytime, obspar.doplot)
-                    if ((P_GW <= obspar.MinProbCut)):
+                    P_GW, TC, pixlist1, ipixlistHR1 = ComputeProbability2D(prob, yprob1, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
+                                                                           obspar.location, obspar.maxZenith, obspar.FOV, name, pixlist1, ipixlistHR1, counter, dirName, obspar.useGreytime, obspar.doPlot)
+                    if ((P_GW <= obspar.minProbcut)):
                         print('Fail')
                     else:
                         Round.append(2)
@@ -126,7 +126,7 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
                         ObservationTimearray.append(
                             str(ObservationTime).split('.')[0])
                         counter = counter+1
-                elif (P_GW >= obspar.MinProbCut):
+                elif (P_GW >= obspar.minProbcut):
                     Round.append(1)
                     P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
                     RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
@@ -168,36 +168,36 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
     #section = 'GWBestGalaxyParameters'
 
     #try:
-    #    max_zenith = int(parser.get(section, 'max_zenith'))
-    #    MaxNights = int(parser.get(section, 'MaxNights'))
+    #    maxZenith = int(parser.get(section, 'maxZenith'))
+    #    maxNights = int(parser.get(section, 'maxNights'))
     #    FOV = float(parser.get(section, 'FOV'))
-    #    MaxRuns = int(parser.get(section, 'MaxRuns'))
+    #    maxRuns = int(parser.get(section, 'maxRuns'))
     #    probCut = float(parser.get(section, 'probCut'))
     #    MinimumProbCutForCatalogue = float(parser.get(section, 'MinimumProbCutForCatalogue'))
-    #    doplot = (parser.getboolean(section, 'doplot'))
+    #    doPlot = (parser.getboolean(section, 'doPlot'))
     #    Duration = int(parser.get(section, 'Duration'))
     #    MinDuration = int(parser.get(section, 'MinDuration'))
-    #    SecondRound = (parser.getboolean(section, 'SecondRound'))
+    #    secondRound = (parser.getboolean(section, 'secondRound'))
     #    FulFillReq_Percentage = float(parser.get(section, 'FulFillReq_Percentage'))
 
 
     #except Exception, x:
     #    print x
 
-    #print('GWBestGalaxyParameters:', max_zenith,MaxNights,FOV, MaxRuns, probCut, MinimumProbCutForCatalogue, doplot, Duration, MinDuration, SecondRound, FulFillReq_Percentage)
+    #print('GWBestGalaxyParameters:', maxZenith,maxNights,FOV, maxRuns, probCut, MinimumProbCutForCatalogue, doPlot, Duration, MinDuration, secondRound, FulFillReq_Percentage)
 
     #########################
-    max_zenith = 60
+    maxZenith = 60
     FOV = 1.5
-    MaxRuns = 20  # Maximum number of pointings/runs
-    MaxNights = 3
+    maxRuns = 20  # Maximum number of pointings/runs
+    maxNights = 3
     MinimumProbCutForCatalogue = 0.01
     probCut = 0.05
-    doplot = False
-    SecondRound = False
+    doPlot = False
+    secondRound = False
     Duration = 28
     MinDuration = 10
-    ZenithWeighting = 0.75
+    zenithWeighting = 0.75
     ####################
 
     # load galaxy catalog from local file
@@ -249,25 +249,25 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
     # Time in UTC
 
     NightDarkRuns = NightDarkObservation(
-        ObservationTime0, Observatory, MaxNights, Duration, MinDuration)
+        ObservationTime0, Observatory, maxNights, Duration, MinDuration)
 
     totalProb = 0.
 
     for j in range(0, len(NightDarkRuns)):
-        if (len(ObservationTimearray) < MaxRuns):
+        if (len(ObservationTimearray) < maxRuns):
             ObservationTime = NightDarkRuns[j]
 
             visible, altaz, tGals_aux = VisibleAtTime(
-                ObservationTime, tGals_aux, max_zenith, Observatory.Location)
+                ObservationTime, tGals_aux, maxZenith, Observatory.location)
 
             if (visible):
 
-                visiMask = altaz.alt.value > 90 - (max_zenith + FOV)
+                visiMask = altaz.alt.value > 90 - (maxZenith + FOV)
                 visiGals = tGals_aux[visiMask]
                 # visiGals = ModifyCatalogue(visiGals, FOV, sum_dP_dV)
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, max_zenith, FOV, ZenithWeighting, UsePix=False)
+                    visiGals, maxZenith, FOV, zenithWeighting, UsePix=False)
 
                 finalGals = visiGals[mask]
                 probability = SimpleGWprob(
@@ -276,18 +276,18 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
                 if (probability > probCut):
                     # final galaxies within the FoV
                     # This notes LIGOVirgo type of signal
-                    if ((probability < (2*probCut)) and (sum(P_GWarray) > 0.40) and SecondRound):
+                    if ((probability < (2*probCut)) and (sum(P_GWarray) > 0.40) and secondRound):
                         # print('probability',probability)
                         visible, altaz, tGals_aux2 = VisibleAtTime(
-                            ObservationTime, tGals_aux2, max_zenith, Observatory.Location)
+                            ObservationTime, tGals_aux2, maxZenith, Observatory.location)
                         if (visible):
                             visiMask = altaz.alt.value > 90 - \
-                                (max_zenith + FOV)
+                                (maxZenith + FOV)
                             visiGals2 = tGals_aux2[visiMask]
                             # visiGals = ModifyCatalogue(visiGals, FOV, sum_dP_dV)
 
                             mask, minz = FulfillsRequirement(
-                                visiGals2, max_zenith, FOV, ZenithWeighting, UsePix=False)
+                                visiGals2, maxZenith, FOV, zenithWeighting, UsePix=False)
 
                             finalGals2 = visiGals2[mask]
                             probability = SimpleGWprob(
@@ -296,8 +296,8 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
                                                                                                            finalGals2, visiGals2,
                                                                                                            tGals_aux2, sum_dP_dV,
                                                                                                            alreadysumipixarray2,
-                                                                                                           nside, minz, max_zenith, FOV, name,
-                                                                                                           savedcircle2, dirName, doplot)
+                                                                                                           nside, minz, maxZenith, FOV, name,
+                                                                                                           savedcircle2, dirName, doPlot)
 
                             RAarray.append(finalGals2['RAJ2000'][:1])
                             DECarray.append(finalGals2['DEJ2000'][:1])
@@ -309,7 +309,7 @@ def BestCandidateonPGal(filename, ObservationTime0, galFile):
                         # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV'][:1])
 
                         p_gal, p_gw, tGals_aux, alreadysumipixarray1, savedcircle = ComputeProbBCFOV(
-                            prob, ObservationTime, finalGals, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, max_zenith, FOV, name, savedcircle, dirName, doplot)
+                            prob, ObservationTime, finalGals, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, maxZenith, FOV, name, savedcircle, dirName, doPlot)
                         RAarray.append(finalGals['RAJ2000'][:1])
                         DECarray.append(finalGals['DEJ2000'][:1])
                         Round.append(1)
@@ -362,7 +362,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
 
     # load galaxy catalog from local file
     # this could be done at the beginning of the night to save time
-    if not obspar.Mangrove:
+    if not obspar.mangrove:
         cat = LoadGalaxies(galFile)
     else:
         cat = LoadGalaxies_SteMgal(galFile)
@@ -390,12 +390,12 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
         print("Found a 3D reconstruction")
 
     # correlate GW map with galaxy catalog, retrieve ordered list
-    if not obspar.Mangrove:
+    if not obspar.mangrove:
         tGals0, sum_dP_dV = CorrelateGalaxies_LVC(
-            prob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+            prob, distmu, distsigma, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
     else:
         tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(
-            prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+            prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
 
     alreadysumipixarray1 = []
     alreadysumipixarray2 = []
@@ -410,7 +410,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
             PointingFile, tGals0, alreadysumipixarray1, sum_dP_dV, obspar.FOV, prob, nside)
         # for second round
         # ra, dec, tGals, AlreadyObservedPgw, AlreadyObservedPgal,alreadysumipixarray2 = SubstractPointings(PointingFile, tGals0,alreadysumipixarray1,sum_dP_dV,obspar.FOV,prob,nside)
-        MaxRuns = obspar.MaxRuns - len(np.atleast_1d(ra))
+        maxRuns = obspar.maxRuns - len(np.atleast_1d(ra))
         sumPGW = sum(AlreadyObservedPgw)
         sumPGAL = sum(AlreadyObservedPgal)
 
@@ -436,10 +436,10 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
 
     Round = []
     print('----------   NEW FOLLOW-UP ATTEMPT   ----------')
-    print('MaxRuns: ', obspar.MaxRuns, 'MinimumProbCutForCatalogue: ',
-          obspar.MinimumProbCutForCatalogue)
+    print('maxRuns: ', obspar.maxRuns, 'MinimumProbCutForCatalogue: ',
+          obspar.minimumProbCutForCatalogue)
 
-    if (obspar.UseGreytime):
+    if (obspar.useGreytime):
         NightDarkRuns = NightDarkObservationwithGreyTime(
             ObservationTime0, obspar)
     else:
@@ -450,55 +450,55 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
     totalProb = 0.
     counter = 0
     for j, NightDarkRun in enumerate(NightDarkRuns):
-        if (len(ObservationTimearray) < obspar.MaxRuns):
+        if (len(ObservationTimearray) < obspar.maxRuns):
             ObservationTime = NightDarkRun
             visible, altaz, tGals_aux = VisibleAtTime(
-                ObservationTime, tGals_aux, obspar.max_zenith, obspar.Location)
+                ObservationTime, tGals_aux, obspar.maxZenith, obspar.location)
 
             if (visible):
 
                 # select galaxies within the slightly enlarged visiblity window
                 visiMask = altaz.alt.value > 90 - \
-                    (obspar.max_zenith+obspar.FOV)
+                    (obspar.maxZenith+obspar.FOV)
                 visiGals = tGals_aux[visiMask]
                 visiGals = ModifyCatalogue(
                     prob, visiGals, obspar.FOV, sum_dP_dV, nside)
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=False)
-                if obspar.UseGreytime:
+                    visiGals, obspar.maxZenith, obspar.FOV, obspar.zenithWeighting, UsePix=False)
+                if obspar.useGreytime:
                     maskgrey = FulfillsRequirementGreyObservations(
-                        ObservationTime, visiGals, obspar.Location, obspar.MoonSourceSeparation)
+                        ObservationTime, visiGals, obspar.location, obspar.moonSourceSeparation)
                     finalGals = visiGals[mask & maskgrey]
-                if not obspar.UseGreytime:
+                if not obspar.useGreytime:
                     finalGals = visiGals[mask]
 
-                if (finalGals['dp_dV_FOV'][:1] > obspar.MinProbCut):
+                if (finalGals['dp_dV_FOV'][:1] > obspar.minProbcut):
                     # final galaxies within the FoV
                     # This notes LIGOVirgo type of signal
-                    if ((finalGals['dp_dV_FOV'][:1] < (2 * obspar.MinProbCut)) and (sum(P_GWarray) > 0.40) and obspar.SecondRound):
+                    if ((finalGals['dp_dV_FOV'][:1] < (2 * obspar.minProbcut)) and (sum(P_GWarray) > 0.40) and obspar.secondRound):
                         print('probability', finalGals['dp_dV_FOV'][:1])
                         visible, altaz, tGals_aux2 = VisibleAtTime(
-                            ObservationTime, tGals_aux2, obspar.max_zenith, obspar.Location)
+                            ObservationTime, tGals_aux2, obspar.maxZenith, obspar.location)
                         if (visible):
                             print("we are in round 2")
                             visiMask = altaz.alt.value > 90 - \
-                                (obspar.max_zenith + obspar.FOV)
+                                (obspar.maxZenith + obspar.FOV)
                             visiGals2 = tGals_aux2[visiMask]
                             visiGals2 = ModifyCatalogue(
                                 prob, visiGals2, obspar.FOV, sum_dP_dV, nside)
 
                             mask, minz = FulfillsRequirement(
-                                visiGals2, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=False)
+                                visiGals2, obspar.maxZenith, obspar.FOV, obspar.zenithWeighting, UsePix=False)
 
-                            if obspar.UseGreytime:
+                            if obspar.useGreytime:
                                 maskgrey = FulfillsRequirementGreyObservations(
-                                    ObservationTime, visiGals2, obspar.Location, obspar.MoonSourceSeparation)
+                                    ObservationTime, visiGals2, obspar.location, obspar.moonSourceSeparation)
                                 finalGals2 = visiGals2[mask & maskgrey]
-                            if not obspar.UseGreytime:
+                            if not obspar.useGreytime:
                                 finalGals2 = visiGals2[mask]
                             p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(
-                                prob, ObservationTime, obspar.Location, finalGals2, False, visiGals2, tGals_aux2, sum_dP_dV, alreadysumipixarray2, nside, minz, obspar.max_zenith, obspar.FOV, counter, name, dirName, obspar.doplot)
+                                prob, ObservationTime, obspar.location, finalGals2, False, visiGals2, tGals_aux2, sum_dP_dV, alreadysumipixarray2, nside, minz, obspar.maxZenith, obspar.FOV, counter, name, dirName, obspar.doPlot)
 
                             RAarray.append(float('{:3.4f}'.format(
                                 float(finalGals2['RAJ2000'][:1]))))
@@ -513,7 +513,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
 
                         else:  # NOTE: not sure if this should be added
                             p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(
-                                prob, ObservationTime, obspar.Location, finalGals, False, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, obspar.max_zenith, obspar.FOV, counter, name, dirName, obspar.doplot)
+                                prob, ObservationTime, obspar.location, finalGals, False, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, obspar.maxZenith, obspar.FOV, counter, name, dirName, obspar.doPlot)
                             RAarray.append(float('{:3.4f}'.format(
                                 float(finalGals['RAJ2000'][:1]))))
                             DECarray.append(float('{:3.4f}'.format(
@@ -531,7 +531,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                         # print("=================================")
                         # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                         p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(
-                            prob, ObservationTime, obspar.Location, finalGals, False, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, obspar.max_zenith, obspar.FOV, counter, name, dirName, obspar.doplot)
+                            prob, ObservationTime, obspar.location, finalGals, False, visiGals, tGals_aux, sum_dP_dV, alreadysumipixarray1, nside, minz, obspar.maxZenith, obspar.FOV, counter, name, dirName, obspar.doPlot)
 
                         RAarray.append(float('{:3.4f}'.format(
                             float(finalGals['RAJ2000'][:1]))))
@@ -549,7 +549,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                 else:
                     # print("Optimal pointing position is: ")
                     # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
-                    print("NOT passing the cut on dp_dV_FOV > ", obspar.MinProbCut)
+                    print("NOT passing the cut on dp_dV_FOV > ", obspar.minProbcut)
         else:
             break
 
@@ -591,7 +591,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     # this could be done at the beginning of the night to save time
     # galFile='./GLADE_2clean.txt'
 
-    if not obspar.Mangrove:
+    if not obspar.mangrove:
         cat = LoadGalaxies(galFile)
     else:
         cat = LoadGalaxies_SteMgal(galFile)
@@ -610,7 +610,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
 
     print('Loading map from ', filename)
     tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(filename)
-    prob = hp.pixelfunc.ud_grade(tprob,obspar.ReducedNside,power=-2)
+    prob = hp.pixelfunc.ud_grade(tprob,obspar.reducedNside,power=-2)
     npix = len(prob)
     nside = hp.npix2nside(npix)
 
@@ -623,10 +623,10 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
         print("Found a 3D reconstruction")
 
     # correlate GW map with galaxy catalog, retrieve ordered list
-    if not obspar.Mangrove:
-        tGals0, sum_dP_dV = CorrelateGalaxies_LVC(tprob, distmu, distsigma, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+    if not obspar.mangrove:
+        tGals0, sum_dP_dV = CorrelateGalaxies_LVC(tprob, distmu, distsigma, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
     else:
-        tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(tprob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.MinimumProbCutForCatalogue)
+        tGals0, sum_dP_dV = CorrelateGalaxies_LVC_SteMass(tprob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
 
     alreadysumipixarray1 = []
     alreadysumipixarray2 = []
@@ -639,7 +639,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
         # tGals_aux = tGals
         ra, dec, tGals, AlreadyObservedPgw, AlreadyObservedPgal, alreadysumipixarray1 = SubstractPointings(
             PointingFile, tGals0, alreadysumipixarray1, sum_dP_dV, obspar.FOV, prob, nside)
-        MaxRuns = obspar.MaxRuns - len(np.atleast_1d(ra))
+        maxRuns = obspar.maxRuns - len(np.atleast_1d(ra))
         sumPGW = sum(AlreadyObservedPgw)
         sumPGAL = sum(AlreadyObservedPgal)
 
@@ -667,10 +667,10 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     nextround = False
     Round = []
     print('----------   NEW FOLLOW-UP ATTEMPT   ----------')
-    print('MaxRuns: ', obspar.MaxRuns, 'MinimumProbCutForCatalogue: ',
-          obspar.MinimumProbCutForCatalogue)
+    print('maxRuns: ', obspar.maxRuns, 'MinimumProbCutForCatalogue: ',
+          obspar.minimumProbCutForCatalogue)
 
-    if (obspar.UseGreytime):
+    if (obspar.useGreytime):
         NightDarkRuns = NightDarkObservationwithGreyTime(
             ObservationTime0, obspar)
     else:
@@ -682,37 +682,37 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     ###############################
 
     # Get the RA & DEC of pixles of the pixels in an enclosed probability region (% precised by percentageMOC).
-    # Reduce these RA DEC to angles in maps with smaller resolution (ReducedNside)
+    # Reduce these RA DEC to angles in maps with smaller resolution (reducedNside)
 
-    pix_ra1, pix_dec1, area = Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.ReducedNside)
+    pix_ra1, pix_dec1, area = Get90RegionPixReduced(prob,obspar.PercentCoverage,obspar.reducedNside)
 
 
     ##############################
     counter = 0
     for j in range(0, len(NightDarkRuns)):
-        if (len(ObservationTimearray) < obspar.MaxRuns):
+        if (len(ObservationTimearray) < obspar.maxRuns):
             ObservationTime = NightDarkRuns[j]
             if (nextround):
                 ObservationTime = NightDarkRuns[j - 1]
                 nextround = False
-            visible, altaz, tGals_aux = VisibleAtTime(ObservationTime, tGals_aux, obspar.max_zenith,
-                                                      obspar.Location)
+            visible, altaz, tGals_aux = VisibleAtTime(ObservationTime, tGals_aux, obspar.maxZenith,
+                                                      obspar.location)
 
             if (visible):
 
                 # select galaxies within the slightly enlarged visiblity window
                 visiMask = altaz.alt.value > 90 - \
-                    (obspar.max_zenith + obspar.FOV)
+                    (obspar.maxZenith + obspar.FOV)
                 visiGals = tGals_aux[visiMask]
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, obspar.max_zenith, obspar.FOV, obspar.ZenithWeighting, UsePix=True)
+                    visiGals, obspar.maxZenith, obspar.FOV, obspar.zenithWeighting, UsePix=True)
 
                 finalGals = visiGals[mask]
-                visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.max_zenith, tprob, finalGals, obspar.FOV,
-                                             sum_dP_dV, nside, obspar.ReducedNside, minz,obspar.Location)
+                visiPix = ModifyCataloguePIX(pix_ra1, pix_dec1, ObservationTime, obspar.maxZenith, tprob, finalGals, obspar.FOV,
+                                             sum_dP_dV, nside, obspar.reducedNside, minz,obspar.location)
 
-                if (visiPix['PIXFOVPROB'][:1] > obspar.MinProbCut):
+                if (visiPix['PIXFOVPROB'][:1] > obspar.minProbcut):
                     n = n + 1
                     # final galaxies within the FoV
 
@@ -720,12 +720,12 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
                     # print("TARGET COORDINATES AND DETAILS...")
                     # print("=================================")
                     # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
-                    p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob, ObservationTime, obspar.Location,
+                    p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob, ObservationTime, obspar.location,
                                                                                                visiPix, True, visiGals,
                                                                                                tGals_aux, sum_dP_dV,
                                                                                                alreadysumipixarray1,
-                                                                                               nside, minz, obspar.max_zenith,
-                                                                                               obspar.FOV, counter, name, dirName, obspar.doplot)
+                                                                                               nside, minz, obspar.maxZenith,
+                                                                                               obspar.FOV, counter, name, dirName, obspar.doPlot)
                     RAarray.append(
                         float('{:3.4f}'.format(float(visiPix['PIXRA'][:1]))))
                     DECarray.append(
@@ -740,7 +740,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
                 else:
                     print("\nOptimal pointing position is: ")
                     print(visiPix['PIXRA', 'PIXDEC', 'PIXFOVPROB'][:1])
-                    print("NOT passing the cut on dp_dV_FOV > ", obspar.MinProbCut)
+                    print("NOT passing the cut on dp_dV_FOV > ", obspar.minProbcut)
 
         else:
             break
@@ -814,14 +814,14 @@ def PGWonFoV_WindowsfromIRFs(filename, InputChar, TC, parameters, dirName):
     print('Loading map from ', filename)
     tprob, distmu, distsigma, distnorm, detectors, fits_id, thisDistance, thisDistanceErr = LoadHealpixMap(
         filename)
-    prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
+    prob = hp.pixelfunc.ud_grade(tprob, obspar.reducedNside, power=-2)
 
-    nside = obspar.ReducedNside
+    nside = obspar.reducedNside
 
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.percentageMOC, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.reducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     has3D = True
     if (len(distnorm) == 0):
@@ -851,32 +851,32 @@ def PGWonFoV_WindowsfromIRFs(filename, InputChar, TC, parameters, dirName):
     # Minimum set to 10 seconds!
     # Starting of observation and duration of observation
     tstar, tobs = ObtainObservingTimes(
-        totalTime, total_followupDelay, run, mergerID, observatory, obspar.zenith)
+        totalTime, total_followupDelay, run, mergerID, observatory, obspar.maxZenith)
 
     counter = 0
     # Loop where probabilities are computed comes here
 
     for j in range(0, len(tobs), 1):
-        if (j > obspar.MaxRuns):
+        if (j > obspar.maxRuns):
             break
         else:
             ObservationTime = ObservationTime0 + \
                 datetime.timedelta(seconds=tstar[j])
             # print(ObservationTime)
 
-            ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.MinProbCut,
-                                            obspar.max_zenith, observatory.Location, obspar.MoonSourceSeparation, False)
+            ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
+                                            obspar.maxZenith, observatory.location, obspar.moonSourceSeparation, False)
             # print(ObsBool)
             if ObsBool:
                 # Round 1
                 # print('Round ',j,'counter',counter)
-                P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.ReducedNside, obspar.HRnside,
-                                                                     obspar.MinProbCut, ObservationTime, observatory.Location,
-                                                                     obspar.max_zenith, obspar.FOV, name, pixlist, ipixlistHR,
+                P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside, obspar.HRnside,
+                                                                     obspar.minProbcut, ObservationTime, observatory.location,
+                                                                     obspar.maxZenith, obspar.FOV, name, pixlist, ipixlistHR,
                                                                      counter,
-                                                                     dirName, False, obspar.doplot)
+                                                                     dirName, False, obspar.doPlot)
                 print('P_GW', P_GW)
-                if ((P_GW >= obspar.MinProbCut)):
+                if ((P_GW >= obspar.minProbcut)):
                     P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
                     RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
                     DECarray.append(float('{:3.4f}'.format(float(TC.dec.deg))))
@@ -928,17 +928,17 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     if UseObs == 'South':
         print('Observed form the', UseObs)
         obspar.name = UseObs
-        obspar.Lon = CTASouthObservatory().Lon
-        obspar.Lat = CTASouthObservatory().Lat
-        obspar.Height = CTASouthObservatory().Height
-        obspar.Location = CTASouthObservatory().Location
+        obspar.lon = CTASouthObservatory().Lon
+        obspar.lat = CTASouthObservatory().Lat
+        obspar.height = CTASouthObservatory().Height
+        obspar.location = CTASouthObservatory().location
     else:
         print('Observed from the', UseObs)
         obspar.name = UseObs
-        obspar.Lon = CTANorthObservatory().Lon
-        obspar.Lat = CTANorthObservatory().Lat
-        obspar.Height = CTANorthObservatory().Height
-        obspar.Location = CTANorthObservatory().Location
+        obspar.lon = CTANorthObservatory().Lon
+        obspar.lat = CTANorthObservatory().Lat
+        obspar.height = CTANorthObservatory().Height
+        obspar.location = CTANorthObservatory().location
 
     print(obspar)
     # link to the GW map
@@ -983,15 +983,15 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     # distsigma = skymap_OD[1]['diststd']
     # distnorm = skymap_OD[1]['diststd']
 
-    prob = hp.pixelfunc.ud_grade(tprob, obspar.ReducedNside, power=-2)
+    prob = hp.pixelfunc.ud_grade(tprob, obspar.reducedNside, power=-2)
 
-    nside = obspar.ReducedNside
+    nside = obspar.reducedNside
 
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
 
     # Create table for 2D probability at 90% containment
     rapix, decpix, areapix = Get90RegionPixReduced(
-        prob, obspar.percentageMOC, obspar.ReducedNside)
+        prob, obspar.percentageMOC, obspar.reducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     has3D = True
 
@@ -1017,16 +1017,16 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
         datetime.timedelta(seconds=total_followupDelay)
 
     print("Main info of this scheduling:", totalTime,
-          total_followupDelay, ID, TC, obspar.Location)
+          total_followupDelay, ID, TC, obspar.location)
 
     TotalNights = 2
     counter = 0
     counterTotalPossible = 0
-    MaxRuns = 20
+    maxRuns = 20
     # GrbsensMax = 16384
     # 15 minutes.  Allows to check if 15 minutes later there is a better opportunity
     AuxTimeNextTry = 900
-    # MinProbCut = 0.005
+    # minProbcut = 0.005
 
     # case 1 = TstartNight == False
     # case 2 = "The source is not on the temporal FoV of the instrument"
@@ -1071,13 +1071,13 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                     ObsBool = False
                     print("The source is not on the temporal FoV of the instrument")
                     break
-                ObsBool, yprob = ZenithAngleCut(prob, nside, checkTime, obspar.MinProbCut,
-                                                obspar.max_zenith, obspar.Location, obspar.MoonSourceSeparation, usegreytime=False)
+                ObsBool, yprob = ZenithAngleCut(prob, nside, checkTime, obspar.minProbcut,
+                                                obspar.maxZenith, obspar.location, obspar.moonSourceSeparation, useGreytime=False)
                 print(checkTime, ObsBool)
                 if (ObsBool == True):
                     StartObsTime = checkTime
-                    print("The first time the GW is observed is", StartObsTime, "MinProbCut", obspar.MinProbCut, "max_zenith",
-                          obspar.max_zenith)
+                    print("The first time the GW is observed is", StartObsTime, "minProbcut", obspar.minProbcut, "maxZenith",
+                          obspar.maxZenith)
                     break
             if (ObsBool):
                 # Get the first 100 clusters of probability for the masked map
@@ -1089,7 +1089,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                     print("  ")
                     print("Observation number ", counter)
                     print("Starting time", StartObsTime)
-                    if (tt > MaxRuns):
+                    if (tt > maxRuns):
                         break
                     if ((TendNight - datetime.timedelta(seconds=interObsSlew) - StartObsTime).total_seconds() <= 0):
                         print("---- NIGHT IS OVER ----")
@@ -1127,7 +1127,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
 
                     # PreDefWindow.append(predefWind[j])
                     # ObservationTime = ObservationTime0 + datetime.timedelta(seconds=tstar)
-                    if ((P_GW >= obspar.MinProbCut)):
+                    if ((P_GW >= obspar.minProbcut)):
                         # print("===== RESULTS ========")
                         print('++++ SCHEDULING OBS +++++')
                         P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
@@ -1145,7 +1145,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                         Delay.append(DelayObs)
                         counter = counter + 1
                     # Although OBS AND NIGHT WAS TRUE
-                    elif ((P_GW <= obspar.MinProbCut) and (P_GW > 0)):
+                    elif ((P_GW <= obspar.minProbcut) and (P_GW > 0)):
                         # print("===== RESULTS ========")
                         print('++++ Probability too low +++++')
                         P_GWarray.append(
@@ -1214,27 +1214,27 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
     section = 'GWGalaxyProbabilityIntegrated-Parameters'
 
     try:
-        max_zenith = int(parser.get(section, 'max_zenith'))
-        MaxNights = int(parser.get(section, 'MaxNights'))
+        maxZenith = int(parser.get(section, 'maxZenith'))
+        maxNights = int(parser.get(section, 'maxNights'))
         FOV = float(parser.get(section, 'FOV'))
-        MaxRuns = int(parser.get(section, 'MaxRuns'))
+        maxRuns = int(parser.get(section, 'maxRuns'))
         probCut = float(parser.get(section, 'probCut'))
         MinimumProbCutForCatalogue = float(
             parser.get(section, 'MinimumProbCutForCatalogue'))
-        doplot = (parser.getboolean(section, 'doplot'))
+        doPlot = (parser.getboolean(section, 'doPlot'))
         Duration = int(parser.get(section, 'Duration'))
         MinDuration = int(parser.get(section, 'MinDuration'))
-        SecondRound = (parser.getboolean(section, 'SecondRound'))
-        ZenithWeighting = float(
-            parser.get(section, 'ZenithWeighting'))
-        UseGreytime = (parser.getboolean(section, 'UseGreytime'))
+        secondRound = (parser.getboolean(section, 'secondRound'))
+        zenithWeighting = float(
+            parser.get(section, 'zenithWeighting'))
+        useGreytime = (parser.getboolean(section, 'useGreytime'))
 
     except Exception as x:
         print(x)
 
-    print('GWGalaxyProbabilityIntegrated - Parameters:', max_zenith, MaxNights, FOV, MaxRuns, probCut,
-          MinimumProbCutForCatalogue, doplot,
-          Duration, MinDuration, SecondRound, ZenithWeighting, dirName, UseGreytime)
+    print('GWGalaxyProbabilityIntegrated - Parameters:', maxZenith, maxNights, FOV, maxRuns, probCut,
+          MinimumProbCutForCatalogue, doPlot,
+          Duration, MinDuration, secondRound, zenithWeighting, dirName, useGreytime)
 
     #########################
 
@@ -1294,7 +1294,7 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
     print('+++++++++++++++++++++++++++++++++++++++++++++++')
     print('----------   NEW FOLLOW-UP ATTEMPT   ----------')
     print('+++++++++++++++++++++++++++++++++++++++++++++++')
-    print('MaxRuns: ', MaxRuns, 'MinimumProbCutForCatalogue: ',
+    print('maxRuns: ', maxRuns, 'MinimumProbCutForCatalogue: ',
           MinimumProbCutForCatalogue)
     # SlewingTime=datetime.timedelta(seconds=210)
     ObservationTime = ObservationTime0
@@ -1310,45 +1310,45 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
     totalProb = 0.
     counter = 0
     for j in range(0, len(NightDarkRuns)):
-        if (len(ObservationTimearray) < MaxRuns):
+        if (len(ObservationTimearray) < maxRuns):
             ObservationTime = NightDarkRuns[j]
             visible, altaz, tGals_aux = VisibleAtTime(
-                ObservationTime, tGals_aux, max_zenith, observatory.Location)
+                ObservationTime, tGals_aux, maxZenith, observatory.location)
 
             if (visible):
 
                 # select galaxies within the slightly enlarged visiblity window
-                visiMask = altaz.alt.value > 90 - (max_zenith + FOV)
+                visiMask = altaz.alt.value > 90 - (maxZenith + FOV)
                 visiGals = tGals_aux[visiMask]
                 visiGals = ModifyCatalogue(
                     prob, visiGals, FOV, sum_dP_dV, nside)
 
                 mask, minz = FulfillsRequirement(
-                    visiGals, max_zenith, FOV, ZenithWeighting, UsePix=False)
+                    visiGals, maxZenith, FOV, zenithWeighting, UsePix=False)
 
                 finalGals = visiGals[mask]
 
                 if (finalGals['dp_dV_FOV'][:1] > probCut):
                     # final galaxies within the FoV
                     if ((finalGals['dp_dV_FOV'][:1] < (2 * probCut)) and (
-                            sum(P_GWarray) > 0.40) and SecondRound):  # This notes LIGOVirgo type of signal
+                            sum(P_GWarray) > 0.40) and secondRound):  # This notes LIGOVirgo type of signal
                         print('probability', finalGals['dp_dV_FOV'][:1])
-                        visible, altaz, tGals_aux2 = VisibleAtTime(ObservationTime, tGals_aux2, max_zenith,
-                                                                   observatory.Location)
+                        visible, altaz, tGals_aux2 = VisibleAtTime(ObservationTime, tGals_aux2, maxZenith,
+                                                                   observatory.location)
                         if (visible):
                             visiMask = altaz.alt.value > 90 - \
-                                (max_zenith + FOV)
+                                (maxZenith + FOV)
                             visiGals2 = tGals_aux2[visiMask]
                             visiGals2 = ModifyCatalogue(
                                 prob, visiGals2, FOV, sum_dP_dV, nside)
 
-                            mask, minz = FulfillsRequirement(visiGals2, max_zenith, FOV, ZenithWeighting,
+                            mask, minz = FulfillsRequirement(visiGals2, maxZenith, FOV, zenithWeighting,
                                                              UsePix=False)
 
                             finalGals2 = visiGals2[mask]
                             p_gal, p_gw, tGals_aux2, alreadysumipixarray2 = ComputeProbPGALIntegrateFoV(prob,
                                                                                                         ObservationTime,
-                                                                                                        observatory.Location,
+                                                                                                        observatory.location,
                                                                                                         finalGals2,
                                                                                                         False,
                                                                                                         visiGals2,
@@ -1356,9 +1356,9 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
                                                                                                         sum_dP_dV,
                                                                                                         alreadysumipixarray2,
                                                                                                         nside, minz,
-                                                                                                        max_zenith, FOV,
+                                                                                                        maxZenith, FOV,
                                                                                                         counter, name,
-                                                                                                        dirName, doplot)
+                                                                                                        dirName, doPlot)
 
                             RAarray.append(finalGals2['RAJ2000'][:1])
                             DECarray.append(finalGals2['DEJ2000'][:1])
@@ -1371,15 +1371,15 @@ def PGalonFoV_WindowsFromList(filename, galFile, InputObservationList, UseObs, d
                         # print(finalGals['RAJ2000', 'DEJ2000', 'Bmag', 'Dist', 'Alt', 'dp_dV','dp_dV_FOV'][:1])
                         p_gal, p_gw, tGals_aux, alreadysumipixarray1 = ComputeProbPGALIntegrateFoV(prob,
                                                                                                    ObservationTime,
-                                                                                                   observatory.Location,
+                                                                                                   observatory.location,
                                                                                                    finalGals, False,
                                                                                                    visiGals, tGals_aux,
                                                                                                    sum_dP_dV,
                                                                                                    alreadysumipixarray1,
                                                                                                    nside, minz,
-                                                                                                   max_zenith, FOV,
+                                                                                                   maxZenith, FOV,
                                                                                                    counter, name,
-                                                                                                   dirName, doplot)
+                                                                                                   dirName, doPlot)
                         RAarray.append(finalGals['RAJ2000'][:1])
                         DECarray.append(finalGals['DEJ2000'][:1])
                         PreDefWindow.append(predefWind[j])
