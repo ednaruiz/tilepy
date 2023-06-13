@@ -26,6 +26,7 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
 from astropy.utils import iers
+from astropy.coordinates import Angle
 from gdpyc import DustMap
 from mocpy import MOC
 from scipy.stats import norm
@@ -60,12 +61,12 @@ class Tools:
     def IsDarkness(cls, obsTime, obspar):
         sunAlt = Tools.SunAlt(obsTime, obspar)
         moonAlt = Tools.MoonAlt(obsTime, obspar)
-        gSunDown = obspar.sunDown
-        gMoonDown = obspar.moonDown
+        SunDown = obspar.sunDown
+        MoonDown = obspar.moonDown
 
-        if sunAlt > gSunDown:
+        if sunAlt > SunDown:
             return False
-        if moonAlt > gMoonDown:
+        if moonAlt > MoonDown:
             return False
 
         return True
@@ -80,15 +81,15 @@ class Tools:
         # moonAz = Tools.MoonAz(obsTime,obsSite)
         # MOON phase
         moonPhase = Tools.MoonPhase(obsTime, obspar)
-        gSunDown = obspar.sunDown
-        gMoonDown = obspar.moonDown
-        gMoonGrey = obspar.moonGrey
-        gMoonPhase = obspar.moonPhase
-        if sunAlt > gSunDown:
+        SunDown = obspar.sunDown
+        MoonDown = obspar.moonDown
+        MoonGrey = obspar.moonGrey
+        MoonPhase = obspar.moonPhase
+        if sunAlt > SunDown:
             return False
-        if moonAlt > gMoonGrey:
+        if moonAlt > MoonGrey:
             return False
-        if moonPhase > gMoonPhase and moonAlt > gMoonDown:
+        if moonPhase > MoonPhase and moonAlt > MoonDown:
             return False
         return True
 
@@ -136,7 +137,8 @@ class Tools:
         obs.lat = str(obspar.lat / u.deg)
         obs.elev = obspar.height / u.m
         obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obspar.horizonSun
+        #obs.horizon = obspar.horizonSun
+        obs.horizon = Angle(obspar.sunDown, u.deg).to_string(unit=u.degree, sep=':')
         sun.compute(obs)
         nextSunrise = obs.next_rising(
             sun, use_center=True).datetime().replace(tzinfo=pytz.utc)
@@ -150,7 +152,8 @@ class Tools:
         obs.lat = str(obspar.lat / u.deg)
         obs.elev = obspar.height / u.m
         obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obspar.horizonSun
+        #obs.horizon = obspar.horizonSun
+        obs.horizon = Angle(obspar.sunDown, u.deg).to_string(unit=u.degree, sep=':')
         sun.compute(obs)
         previousSunrise = obs.previous_rising(
             sun, use_center=True).datetime().replace(tzinfo=pytz.utc)
@@ -164,7 +167,8 @@ class Tools:
         obs.lat = str(obspar.lat / u.deg)
         obs.elev = obspar.height / u.m
         obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obspar.horizonSun
+        #obs.horizon = obspar.horizonSun
+        obs.horizon = Angle(obspar.sunDown, u.deg).to_string(unit=u.degree, sep=':')
         sun.compute(obs)
         nextSunset = obs.next_setting(
             sun, use_center=True).datetime().replace(tzinfo=pytz.utc)
@@ -178,7 +182,8 @@ class Tools:
         obs.lat = str(obspar.lat / u.deg)
         obs.elev = obspar.height / u.m
         obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obspar.HorizonMoon
+        #obs.horizon = obspar.HorizonMoon
+        obs.horizon = Angle(obspar.moonDown, u.deg).to_string(unit=u.degree, sep=':')
         moon.compute()
         previousMoonset = obs.previous_setting(
             moon, use_center=True).datetime().replace(tzinfo=pytz.utc)
@@ -192,7 +197,8 @@ class Tools:
         obs.lat = str(obspar.lat / u.deg)
         obs.elev = obspar.height / u.m
         obs.date = obsTime  # Requires time in UTC
-        obs.horizon = obspar.HorizonMoon
+        #obs.horizon = obspar.HorizonMoon
+        obs.horizon = Angle(obspar.moonDown, u.deg).to_string(unit=u.degree, sep=':')
         moon.compute()
         nextMoonset = obs.next_setting(
             moon, use_center=True).datetime().replace(tzinfo=pytz.utc)
@@ -293,8 +299,8 @@ class ObservationParameters(object):
     """Stores all the parameters in the .ini file"""
     # Observatory
 
-    def __init__(self, name=None, lat=0, lon=0, height=0, sunDown=None, horizonSun=None, moonDown=None,
-                 horizonMoon=None, moonGrey=None, moonPhase=None, moonSourceSeparation=None,
+    def __init__(self, name=None, lat=0, lon=0, height=0, sunDown=None, moonDown=None,
+                 moonGrey=None, moonPhase=None, minMoonSourceSeparation=None,
                  maxMoonSourceSeparation=None, maxZenith=None, FOV=None, maxRuns=None, maxNights=None,
                  duration=None, minDuration=None, useGreytime=None, minSlewing=None, online=False,
                  minimumProbCutForCatalogue=None, minProbcut=None, distCut=None, doPlot=None, secondRound=None,
@@ -310,12 +316,10 @@ class ObservationParameters(object):
 
         # Visibility
         self.sunDown = sunDown
-        self.horizonSun = horizonSun
         self.moonDown = moonDown
-        self.horizonMoon = horizonMoon
         self.moonGrey = moonGrey
         self.moonPhase = moonPhase
-        self.moonSourceSeparation = moonSourceSeparation
+        self.minMoonSourceSeparation = minMoonSourceSeparation
         self.maxMoonSourceSeparation = maxMoonSourceSeparation
 
         # Operations
@@ -395,15 +399,13 @@ class ObservationParameters(object):
 
         section = 'visibility'
         self.sunDown = int(parser.get(section, 'sundown', fallback=0))
-        self.horizonSun = parser.get(section, 'horizonsun', fallback=0)
         self.moonDown = float(parser.get(section, 'moondown', fallback=0))
-        self.horizonMoon = (parser.get(section, 'horizonmoon', fallback=0))
         # Altitude in degrees
         self.moonGrey = int(parser.get(section, 'moongrey', fallback=0))
         self.moonPhase = int(parser.get(
             section, 'gmoonphase', fallback=0))  # Phase in %
-        self.moonSourceSeparation = int(parser.get(
-            section, 'moonsourceseparation', fallback=0))  # Separation in degrees
+        self.minMoonSourceSeparation = int(parser.get(
+            section, 'minmoonsourceseparation', fallback=0))  # Separation in degrees
         self.maxMoonSourceSeparation = int(parser.get(
             section, 'maxmoonsourceseparation', fallback=0))  # Max separation in degrees
 
@@ -436,8 +438,8 @@ class ObservationParameters(object):
         self.HRnside = int(parser.get(section, 'hrnside', fallback=0))
         self.mangrove = (parser.getboolean(section, 'mangrove', fallback=None))
 
-    def from_args(self, name, lat, lon, height, sunDown, horizonSun, moonDown,
-                  horizonMoon, moonGrey, moonPhase, moonSourceSeparation,
+    def from_args(self, name, lat, lon, height, sunDown, moonDown,
+                  moonGrey, moonPhase, minMoonSourceSeparation,
                   maxMoonSourceSeparation, maxZenith, FOV, maxRuns, maxNights,
                   duration, minDuration, useGreytime, minSlewing, online,
                   minimumProbCutForCatalogue, minProbcut,distCut, doPlot, secondRound,
@@ -453,12 +455,10 @@ class ObservationParameters(object):
 
         # Visibility
         self.sunDown = sunDown
-        self.horizonSun = horizonSun
         self.moonDown = moonDown
-        self.horizonMoon = horizonMoon
         self.moonGrey = moonGrey
         self.moonPhase = moonPhase
-        self.moonSourceSeparation = moonSourceSeparation
+        self.minMoonSourceSeparation = minMoonSourceSeparation
         self.maxMoonSourceSeparation = maxMoonSourceSeparation
 
         # Operations
@@ -852,7 +852,7 @@ def NightDarkObservationwithGreyTime(time, obspar):
                                nb_observation_night=obspar.maxNights)
 
 
-def ZenithAngleCut(prob, nside, time, minProbcut, maxZenith, observatory, MoonSourceSeparation, useGreytime):
+def ZenithAngleCut(prob, nside, time, minProbcut, maxZenith, observatory, minMoonSourceSeparation, useGreytime):
     '''
     Mask in the pixels with zenith angle larger than 45
     '''
@@ -891,7 +891,7 @@ def ZenithAngleCut(prob, nside, time, minProbcut, maxZenith, observatory, MoonSo
                                                                           location=observatory))
         separations = altaz_map.separation(moonaltazs)
         mask_moonDistance = np.zeros(hp.nside2npix(nside), dtype=bool)
-        mask_moonDistance[separations < MoonSourceSeparation * u.deg] = 1
+        mask_moonDistance[separations < minMoonSourceSeparation * u.deg] = 1
         mzenith = hp.ma(pprob)
         mzenith.mask = mask_moonDistance
         yprob = ma.masked_array(pprob, mzenith.mask)
@@ -1386,7 +1386,7 @@ def FulfillsRequirement(theseGals, maxz, FOV, zenithWeighting, UsePix):
     return mask, thisminz
 
 
-def FulfillsRequirementGreyObservations(Ktime, theseGals, observatory, MoonSourceSeparation):
+def FulfillsRequirementGreyObservations(Ktime, theseGals, observatory, minMoonSourceSeparation):
 
     targetCoord = co.SkyCoord(
         theseGals['RAJ2000'], theseGals['DEJ2000'], frame='fk5', unit=(u.deg, u.deg))
@@ -1397,7 +1397,7 @@ def FulfillsRequirementGreyObservations(Ktime, theseGals, observatory, MoonSourc
     separations = altaz_map.separation(moonaltazs)
 
     # Mask
-    greymask = separations > MoonSourceSeparation*u.deg
+    greymask = separations > minMoonSourceSeparation*u.deg
     return greymask
 
 

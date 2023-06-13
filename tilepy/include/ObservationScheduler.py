@@ -135,7 +135,7 @@ def GetSchedule_ConfigFile(obspar):
 
 
 def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, name, lat, lon, height, sunDown, horizonSun, moonDown,
-                        horizonMoon, moonGrey, moonPhase, moonSourceSeparation,
+                        horizonMoon, moonGrey, moonPhase, minMoonSourceSeparation,
                         maxMoonSourceSeparation, maxZenith, FOV, maxRuns, maxNights,
                         duration, minDuration, useGreytime, minSlewing, online,
                         minimumProbCutForCatalogue, minProbcut, distCut, doPlot, secondRound,
@@ -183,7 +183,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
 
     obspar = ObservationParameters()
     obspar.from_args(name, lat, lon, height, sunDown, horizonSun, moonDown,
-                     horizonMoon, moonGrey, moonPhase, moonSourceSeparation,
+                     horizonMoon, moonGrey, moonPhase, minMoonSourceSeparation,
                      maxMoonSourceSeparation, maxZenith, FOV, maxRuns, maxNights,
                      duration, minDuration, useGreytime, minSlewing, online,
                      minimumProbCutForCatalogue, minProbcut, distCut, doPlot, secondRound,

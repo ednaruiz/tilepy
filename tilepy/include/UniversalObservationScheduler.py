@@ -165,7 +165,7 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
 
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
                 ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
-                                                obspar.maxZenith, obspar.location, obspar.moonSourceSeparation, obspar.useGreytime)
+                                                obspar.maxZenith, obspar.location, obspar.minMoonSourceSeparation, obspar.useGreytime)
                 if ObsBool:
                     # Round 1
                     P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
@@ -351,7 +351,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
                         visiGals, obspar.maxZenith, obspar.FOV, obspar.zenithWeighting, UsePix=False)
                     if obspar.useGreytime:
                         maskgrey = FulfillsRequirementGreyObservations(
-                            ObservationTime, visiGals, obspar.location, obspar.moonSourceSeparation)
+                            ObservationTime, visiGals, obspar.location, obspar.minMoonSourceSeparation)
                         finalGals = visiGals[mask & maskgrey]
                     if not obspar.useGreytime:
                         finalGals = visiGals[mask]
@@ -375,7 +375,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
 
                                 if obspar.useGreytime:
                                     maskgrey = FulfillsRequirementGreyObservations(
-                                        ObservationTime, visiGals2, obspar.location, obspar.moonSourceSeparation)
+                                        ObservationTime, visiGals2, obspar.location, obspar.minMoonSourceSeparation)
                                     finalGals2 = visiGals2[mask & maskgrey]
                                 if not obspar.useGreytime:
                                     finalGals2 = visiGals2[mask]
@@ -520,7 +520,7 @@ def PGWinFoV_NObs_Simulation(filename, ObservationTime0, PointingsFile, paramete
 
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
                 ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut, obspar.maxZenith,
-                                                obspar.location, obspar.moonSourceSeparation, obspar.useGreytime)
+                                                obspar.location, obspar.minMoonSourceSeparation, obspar.useGreytime)
                 if ObsBool:
                     # Round 1
                     P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside,

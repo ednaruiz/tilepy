@@ -28,35 +28,6 @@ iers_file = os.path.join(os.path.abspath(
     os.path.dirname(__file__)), '../dataset/finals2000A.all')
 iers.IERS.iers_table = iers.IERS_A.open(iers_file)
 
-'''
-    gloably defined darkenss criteria:
-    max sun and moon altitude in degrees.
-    '''
-'''#################################################
-#   Global parameters about darkness criteria   #
-#################################################
-# max sun and moon altitude in degrees.
-cfg = "./configs/FollowupParameters.ini"
-parser = ConfigParser()
-parser.read(cfg)
-parser.sections()
-section = 'visibility'
-
-try:
-    gSunDown = int(parser.get(section, 'gSunDown'))
-    HorizonSun = parser.get(section, 'HorizonSun')
-    gMoonDown = float(parser.get(section, 'gMoonDown'))
-    HorizonMoon = (parser.get(section, 'HorizonMoon'))
-    gMoonGrey = int(parser.get(section, 'gMoonGrey')) # Altitude in degrees
-    gMoonPhase = int(parser.get(section, 'gMoonPhase'))  # Phase in %
-    MoonSourceSeparation = int(parser.get(section, 'MoonSourceSeparation')) # Separation in degrees
-    MaxMoonSourceSeparation = int(parser.get(section, 'MaxMoonSourceSeparation'))  # Max separation in degrees
-
-except Exception as x:
-    print(x)
-'''
-
-
 def load_healpix_map(filename):
     '''Download aLIGO HEALpix map and keep in cache
         RETURNS:
@@ -202,7 +173,7 @@ def GetObservationPeriod(inputtime0, msource, obspar, plotnumber, dirName, doPlo
     moonDown = obspar.moonDown
     moonPhase = obspar.moonPhase
     sunDown = obspar.sunDown
-    moonSourceSeparation = obspar.moonSourceSeparation
+    minMoonSourceSeparation = obspar.minMoonSourceSeparation
     maxMoonSourceSeparation = obspar.maxMoonSourceSeparation
 
     inputtime = Time(inputtime0)
@@ -259,7 +230,7 @@ def GetObservationPeriod(inputtime0, msource, obspar, plotnumber, dirName, doPlo
         newtimes = []
         newtimes.extend(DTaltitudes['Time UTC'].mjd)
         selectionGreyness = (Altitudes['AltMoon'] < moonGrey) & (Altitudes['AltMoon'] > moonDown) & (Altitudes['moonPhase'] < moonPhase) & (Altitudes['Alt Sun'] < sunDown) & (
-            Altitudes['MoonDistance'] > moonSourceSeparation) & (Altitudes['MoonDistance'] < maxMoonSourceSeparation) & (Altitudes['Alt Source'] > AltitudeCut)
+            Altitudes['MoonDistance'] > minMoonSourceSeparation) & (Altitudes['MoonDistance'] < maxMoonSourceSeparation) & (Altitudes['Alt Source'] > AltitudeCut)
         GTaltitudes = Altitudes[selectionGreyness]
         newtimes.extend(GTaltitudes['Time UTC'].mjd)
         newtimes = sorted(newtimes)
