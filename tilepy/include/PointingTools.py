@@ -447,10 +447,11 @@ class ObservationParameters(object):
                   mangrove):
 
         self.name = name
-        self.lat = lat
-        self.lon = lon
-        self.height = height
-        self.location = EarthLocation(lat=self.lat, lon=self.lon,
+        self.lat = lat * u.deg
+        self.lon = lon * u.deg
+        self.height = height * u.m
+        self.location = EarthLocation(lat=self.lat,
+                                      lon=self.lon,
                                       height=self.height)
 
         # Visibility
