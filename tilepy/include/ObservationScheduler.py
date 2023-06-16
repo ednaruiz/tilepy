@@ -48,7 +48,14 @@ def GetSchedule_ConfigFile(obspar):
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap, filename, obspar.distCut)
+    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar.distCut)
+
+    # adapting the resolutions to the one provided in the original map
+    if (obspar.HRnside > origNSIDE) :
+        obspar.HRNside = origNSIDE
+    if (obspar.reducedNside > obspar.HRNside):
+        obspar.reducedNside = obspar.HRNside
+
     if obspar.locCut != None:
         ra, dec, a, b, pa, area = lsp.ellipse.find_ellipse(prob, cl=90)
         if (obspar.locCut== 'loose' and area > 10000) or (obspar.locCut== 'std' and area > 1000):
@@ -174,8 +181,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap, filename, distCut)
-
+    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, distCut)
 
     print("===========================================================================================")
     pointingsFile = "False"
@@ -190,6 +196,12 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
                      minimumProbCutForCatalogue, minProbcut,distCut, doPlot, secondRound,
                      zenithWeighting, percentageMOC, reducedNside, HRnside,
                      mangrove)
+    
+    # adapting the resolutions to the one provided in the original map
+    if (obspar.HRnside > origNSIDE) :
+        obspar.HRNside = origNSIDE
+    if (obspar.reducedNside > obspar.HRNside):
+        obspar.reducedNside = obspar.HRNside
 
     if has3D:
 
@@ -201,6 +213,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
             os.makedirs(dirName)
 
         print("===========================================================================================")
+        print(" 3D scheduling ")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", pointingsFile)
@@ -237,10 +250,10 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
             os.makedirs(dirName)
 
         print("===========================================================================================")
+        print(" 2D scheduling ")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", pointingsFile)
-        print("Catalog: ", galaxies)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
 
