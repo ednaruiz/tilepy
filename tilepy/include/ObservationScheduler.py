@@ -182,8 +182,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D = Check2Dor3D(fitsMap, filename, distCut)
-
+    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, distCut)
 
     print("===========================================================================================")
     pointingsFile = "False"
@@ -216,6 +215,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
             os.makedirs(dirName)
 
         print("===========================================================================================")
+        print(" 3D scheduling ")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", pointingsFile)
@@ -252,10 +252,10 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
             os.makedirs(dirName)
 
         print("===========================================================================================")
+        print(" 2D scheduling ")
         print("Filename: ", name)
         print("Date: ", ObservationTime)
         print("Previous pointings: ", pointingsFile)
-        print("Catalog: ", galaxies)
         print("Dataset: ", datasetDir)
         print("Output: ", outputDir)
 

@@ -726,7 +726,7 @@ def Check2Dor3D(fitsfile, filename, distCut):
 
     if tdistmean+2*tdiststd > distCut:
         has3D = False
-    return prob, has3D
+    return prob, has3D, NSide
 
 
 def LoadHealpixMap(thisfilename):
