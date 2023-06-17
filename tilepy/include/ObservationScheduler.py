@@ -52,7 +52,7 @@ def GetSchedule_ConfigFile(obspar):
 
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :
-        print("reducing HRnside to the value from the original map ",origNSIDE)
+        print("reducing HRnside to the value from the original map: NSIDE=",origNSIDE)
         obspar.HRnside = origNSIDE
     if (obspar.reducedNside > obspar.HRnside):
         obspar.reducedNside = obspar.HRnside
@@ -200,7 +200,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
     
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :
-        print("reducing HRnside to the value from the original map ",origNSIDE)
+        print("reducing HRnside to the value from the original map: NSIDE=",origNSIDE)
         obspar.HRnside = origNSIDE
     if (obspar.reducedNside > obspar.HRnside):
         obspar.reducedNside = obspar.HRnside

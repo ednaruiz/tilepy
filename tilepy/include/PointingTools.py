@@ -261,8 +261,8 @@ class Tools:
     def GalacticPlaneBorder(cls, coords):
         lon = coords.galactic.l.value  # x-coordinate
         lat = coords.galactic.b.value  # y-coordinate
-        print(lon)
-        print(lat)
+        #print(lon)
+        #print(lat)
         YouAreInside = False
         n = 20
         if (lat <= 10 and lat >= 0 and lon <= 130):
@@ -273,11 +273,11 @@ class Tools:
             n = lat + (1.0/13) * lon
         elif (lat >= -10 and lat <= 0 and lon >= 240):
             n = lat + (1.0/12) * lon - 20
-        print(n)
+        #print(n)
         if np.absolute(n) <= 10:
             YouAreInside = True
             # print('You got here')
-        print(YouAreInside)
+        #print(YouAreInside)
         return YouAreInside
 
     @classmethod
