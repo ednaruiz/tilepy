@@ -599,16 +599,25 @@ def GetGWMap(URL):
         command = 'curl %s -o %s' % (fits_map_url, filename)
         print(command)
         os.system(command)
-
     except x:
         print('Problem with downloading map from url, it was not multiorder or fits.gz')
         warn = "Caught exception: %s" % x
         print(warn)
         pass
 
-    fitsfile = fits.open(filename)
+    newFilename = filename + "_"+str(int(time.time() * 1e6))
+    print("internal filename: ", newFilename)
 
-    return fitsfile, filename
+    try:
+        command = 'mv %s %s' % (filename, newFilename)
+        print(command)
+        os.system(command)
+    except :
+        print("failed to rename the FITS file")
+
+    fitsfile = fits.open(newFilename)
+
+    return fitsfile, newFilename
 
 
 def UNIQSkymap_toNested(skymap_fname):
