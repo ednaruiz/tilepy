@@ -595,8 +595,11 @@ def GetGWMap(URL):
     else:
         print('The GW map is not in multiorder format, we will try the .fits.gz format, you are welcome')
 
+    newFilename = filename + "_"+str(int(time.time() * 1e6))
+    print("internal filename: ", newFilename)
+
     try:
-        command = 'curl %s -o %s' % (fits_map_url, filename)
+        command = 'curl %s -o %s' % (fits_map_url, newFilename)
         print(command)
         os.system(command)
     except x:
@@ -604,16 +607,6 @@ def GetGWMap(URL):
         warn = "Caught exception: %s" % x
         print(warn)
         pass
-
-    newFilename = filename + "_"+str(int(time.time() * 1e6))
-    print("internal filename: ", newFilename)
-
-    try:
-        command = 'mv %s %s' % (filename, newFilename)
-        print(command)
-        os.system(command)
-    except :
-        print("failed to rename the FITS file")
 
     fitsfile = fits.open(newFilename)
 
