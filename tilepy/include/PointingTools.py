@@ -1934,7 +1934,7 @@ def ModifyCatalogue(prob, cat, FOV, totaldPdV, nside):
      using that quantity as a criteria
     '''
     # lengthSG=0.02*len(cat)
-    lengthSG = 1000
+    lengthSG = 100
     SelectedGals = cat[:lengthSG]
     dp_dV_FOV = []
     # print('len(cat[RAJ2000])', len(cat['RAJ2000']))
