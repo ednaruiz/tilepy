@@ -505,7 +505,6 @@ def CubeSimulationSingleObservation_singleSpectrum(InputListrun,InputListMergerI
     DecP = PointingsCoord.dec.deg
 
     #filenameS='ExampleSource.txt'
-    #RAS,DecS=np.genfromtxt(filenameS,skip_header=1)
 
 
     spatial_model = SkyGaussian(lon_0=Source.ra.deg*u.deg, lat_0=Source.dec.deg*u.deg, sigma="0.2 deg")

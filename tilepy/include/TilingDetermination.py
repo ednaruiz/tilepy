@@ -901,7 +901,7 @@ def PGWonFoV_WindowsfromIRFs(filename, InputChar, TC, parameters, dirName):
     return (SuggestedPointings, ObservationTime0, obspar.FOV, nside, len(tobs))
 
 
-def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, outDir):
+def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, conf, datasetDir, outDir):
 
     # UseObs = InputChar['Observatory']
     UseObs = SelectObservatory_fromHotspot(filename)
@@ -984,9 +984,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     # distnorm = skymap_OD[1]['diststd']
 
     prob = hp.pixelfunc.ud_grade(tprob, obspar.reducedNside, power=-2)
-
     nside = obspar.reducedNside
-
     highres = hp.pixelfunc.ud_grade(prob, obspar.HRnside, power=-2)
 
     # Create table for 2D probability at 90% containment
@@ -1033,8 +1031,6 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
     for nights in range(0, TotalNights):
         TstartNight = NextWindowTools.NextObservationWindow(
             ObservationTime, obspar)
-        print(ObservationTime.tzinfo)
-        print(ObservationTime0.tzinfo.utcoffset)
         print("TstartNight", TstartNight)
         if (TstartNight == False):
             TendNight = False
@@ -1043,7 +1039,6 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
             ObsCase = 'NoDarknessFound'
             # print("===== RESULTS ========")
             print('++++ No Darkness Time Found +++++')
-            ObservationTimearray.append(ObservationTime)
             P_GWarray.append(0)
             RAarray.append(0)
             DECarray.append(0)
@@ -1105,7 +1100,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                     print("DelayObs", DelayObs)
                     print("----------------------------")
                     P_GW, TC, ObsExp, ZenIni, ZenEnd, ObsCase, pixlist, ipixlistHR = ComputeProbability2D_SelectClusters(
-                        prob, highres, radecs,  TotalExposure, StartObsTime, DelayObs, interObsSlew, obspar, ID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
+                        prob, highres, radecs,  conf, StartObsTime, DelayObs, interObsSlew, obspar, ID, pixlist, ipixlistHR, counter, datasetDir, outDir, False, False)
                     print("=============")
                     print("P_GW, ObsExp, ZenIni, ZenEnd, ObsCase")
                     print(P_GW, ObsExp, ZenIni, ZenEnd, ObsCase)
@@ -1114,8 +1109,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                     # print("PGW", P_GW,'COORDINATES:', TC,'ZENITH CHANGE', ZenIni,'->', ZenEnd)
                     # print("TotalExposure: ",TotalExposure,"DelayObs:",DelayObs, "Observation Number:",counter, "Exposure:", ObsExp)
 
-                    ObservationTimearray.append(
-                        str(StartObsTime).split('.')[0])
+                    ObservationTimearray.append(str(StartObsTime).split('.')[0].split('+')[0])
 
                     if (ObsCase == 'TimeNotEnoughIte' or ObsCase == 'TimeNotEnough'):
                         StartObsTime = StartObsTime + \
@@ -1174,7 +1168,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, datasetDir, o
                 # The event hasnt been found to be on the temporal FoV of the instrument
                 # print("===== RESULTS ========")
                 print('++++ The event is not in temporal FoV of the instrument +++++')
-                ObservationTimearray.append(ObservationTime)
+                ObservationTimearray.append(str(ObservationTime).split('.')[0].split('+')[0])
                 P_GWarray.append(0)
                 RAarray.append(0)
                 DECarray.append(0)
