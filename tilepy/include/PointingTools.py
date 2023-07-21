@@ -22,7 +22,7 @@ from astropy import units as u
 from astropy.coordinates import EarthLocation, get_sun
 from astropy.coordinates import SkyCoord, AltAz
 from astropy.coordinates import get_moon
-from astropy.io import fits
+from astropy.io import fits, ascii
 from astropy.table import Table
 from astropy.time import Time
 from astropy.utils import iers
@@ -31,9 +31,10 @@ from gdpyc import DustMap
 from mocpy import MOC
 from scipy.stats import norm
 from six.moves import configparser
-
+import ligo.skymap.io.fits as lf
 from .gwobserve import Sensitivity, GRB
 from .observatory import Observatory
+import pandas as pd
 
 if six.PY2:
     ConfigParser = configparser.SafeConfigParser
@@ -488,7 +489,7 @@ class ObservationParameters(object):
 
 ######################################################
 
-# Functions from BestCandidateon PGW ==> 2D
+# Functions related to the Skymap handling 
 
 ######################################################
 
@@ -573,7 +574,7 @@ def GetGBMMap(URL):
     return fitsfile, filename
 
 
-def GetGWMap(URL):
+def GetGWMap_Flat(URL):
     """
     Bottom-level function that takes a url searches for the localisatios maps from the GW database, or waits until it is uplaoded. 
     
@@ -612,6 +613,34 @@ def GetGWMap(URL):
 
     return fitsfile, newFilename
 
+
+def GetGWMap(URL):
+    """
+    Bottom-level function that takes a url searches for the localisation maps in multi-order format from the GW database, or waits until it is uplaoded. 
+    
+    :param URL: the URL of the map
+    :type URL: str
+
+    :return: fitsfile, filename
+    rtype: fits, str
+    """
+    filename = URL.split("/")[-1]
+    print("The filename is ", filename)
+    fits_map_url = URL
+    try:
+        command = 'curl %s -o %s' % (fits_map_url, filename)
+        print(command)
+        os.system(command)
+
+    except x:
+        print('Problem with downloading map from url, it was not multiorder or fits.gz')
+        warn = "Caught exception: %s" % x
+        print(warn)
+        pass
+
+    fitsfile = fits.open(filename)
+    
+    return fitsfile, filename
 
 def UNIQSkymap_toNested(skymap_fname):
     """
@@ -696,42 +725,69 @@ def order_inds2uniq(order, inds):
     return uniq
 
 
-def Check2Dor3D(fitsfile, filename, distCut):
-
-    distnorm = []
-    tdistmean = 0
-    tdiststd = 0
-    fitsfile = fits.open(filename)
-    if (fitsfile[1].header['TFIELDS'] == 4):
-        prob, distmu, distsigma, distnorm = hp.read_map(filename,
-                                                        field=range(4))
-        tdistmean = fitsfile[1].header['DISTMEAN']
-        tdiststd= fitsfile[1].header['DISTSTD']
-    else:
-        prob = hp.read_map(fitsfile, field=range(1))
-
-    has3D = True
-    if len(distnorm) == 0:
-        has3D = False
-
-    npix = len(prob)
-    NSide = hp.npix2nside(npix)
-    MaxPix = np.argmax(prob)
-    MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
-    raMax = np.rad2deg(MaxPhi)
-    decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
-    c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
-
-    InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
-    if InsidePlane:
-        has3D = False
-
-    if tdistmean+2*tdiststd > distCut:
-        has3D = False
-    return prob, has3D, NSide
-
-
 def LoadHealpixMap(thisfilename):
+    """
+    Bottom-level function that downloads aLIGO HEALpix map and keep in cache. 
+
+    :param thisfilename: name of the fits file containing the localisation map
+    :type thisfilename: str
+
+    :return tprob, tdistmu, tdistsigma, distnorm, detectors, event_id, distmean, disterr
+    :rtype: array, array, array, array, array, str, float, foat, float, 
+    """
+    '''
+   :return tprob : array of p-values as a function of sky position
+    :return tdistmu : array of distance estimate
+    :return tdistsigma : array of error on distance estimates
+    :return distnorm : array of distance normalisations
+    :return detectors: which interferometers triggered
+    :return event_id: ID of the event
+    :return distmean: mean distance from the header
+    :return disterr: error on distance from the header
+    :rtype: array
+    '''
+    PrintFileName = "Loading LVC HEALPix map from file: " + thisfilename
+    print(PrintFileName)
+    fitsfile = fits.open(thisfilename)
+
+    tevent_id = "Non specified"
+    tdetectors = ""
+    tdistmean = 0
+    tdisterr = 0
+    tdistmu = []
+    tdistsigma = []
+    tdistnorm = []
+
+    if 'OBJECT' in fitsfile[1].header:
+        tevent_id = fitsfile[1].header['OBJECT']
+    else:
+        tevent_id = "Non specified"
+
+    if 'INSTRUME' in fitsfile[1].header:
+        tdetectors = fitsfile[1].header['INSTRUME']
+    else:
+        tdetectors = "Non specified"
+
+    if (fitsfile[1].header['TFIELDS'] == 1):
+        skymap = lf.read_sky_map(thisfilename)  
+        tprob = skymap[0]
+    else:
+        skymap = lf.read_sky_map(thisfilename, distances = True) 
+        tprob = skymap[0][0]
+        tdistmu = skymap[0][1]
+        tdistsigma = skymap[0][2]
+        tdistnorm  = skymap[0][3]
+        tdistmean = fitsfile[1].header['DISTMEAN']
+        tdisterr = fitsfile[1].header['DISTSTD']
+        print('Event has triggered ', tdetectors, ' => distance = {0:.2f}'.format(
+            tdistmean), ' +- {0:.2f}'.format(tdisterr), ' Mpc') 
+
+    fitsfile.close()
+
+    return tprob, tdistmu, tdistsigma, tdistnorm, tdetectors, tevent_id, tdistmean, tdisterr
+
+
+def LoadHealpixMap_Flat(thisfilename):
     """
     Bottom-level function that downloads aLIGO HEALpix map and keep in cache. 
 
@@ -820,6 +876,195 @@ def LoadHealpixUNIQMap(thisfilename):
 
     return tprob, tdistmu, tdistsigma, tdistnorm
 
+
+def MOC_confidence_region_Flat(infile, percentage, short_name=' ', save2File=False):
+
+    # reading skymap
+    hpx = hp.read_map(infile, verbose=False)
+    npix = len(hpx)
+    nside = hp.npix2nside(npix)
+
+    sort = sorted(hpx, reverse=True)
+    cumsum = np.cumsum(sort)
+    index, value = min(enumerate(cumsum), key=lambda x: abs(x[1] - percentage))
+
+    # finding ipix indices confined in a given percentage
+    index_hpx = range(0, len(hpx))
+    hpx_index = np.c_[hpx, index_hpx]
+
+    sort_2array = sorted(hpx_index, key=lambda x: x[0], reverse=True)
+    value_contour = sort_2array[0:index]
+
+    j = 1
+    table_ipix_contour = []
+
+    for i in range(0, len(value_contour)):
+        ipix_contour = int(value_contour[i][j])
+        table_ipix_contour.append(ipix_contour)
+
+    # from index to polar coordinates
+    theta, phi = hp.pix2ang(nside, table_ipix_contour)
+    # converting these to right ascension and declination in degrees
+    ra = np.rad2deg(phi)
+    dec = np.rad2deg(0.5 * np.pi - theta)
+
+    # creating an astropy.table with RA[deg] and DEC[deg] ipix positions
+    from astropy.table import Table
+    contour_ipix = Table([ra, dec], names=(
+        'RA[deg]', 'DEC[deg]'), meta={'ipix': 'ipix table'})
+
+    # setting MOC order
+    from math import log
+    moc_order = int(log(nside, 2))
+
+    # creating a MOC map from the contour_ipix table
+    moc = MOC.from_table(contour_ipix, 'RA[deg]', 'DEC[deg]', moc_order)
+
+    # writing MOC file in fits
+    if (save2File):
+        moc.write(short_name + '_MOC_' + str(percentage), format='fits')
+    return moc
+
+
+def MOC_confidence_region2D_Flat(hpx, percentage, short_name=' ', save2File=False):
+    """
+        Multi-Order coverage map (MOC) of sky area enclosed within a contour plot
+        at a given confidence level.
+
+        Input:
+        infile: healpix format
+        LVC probability sky map
+        percentage: float
+        probability percentage of the enclosed area
+        short_name: str
+        output file name
+
+        Output: fits format
+        MOC map named "short_name"_"percentage"
+
+        Remark: for json format change the statement
+        "moc.write(short_name+'_MOC_'+str(percentage), format='fits' )" -->
+        "moc.write(short_name+'_MOC_'+str(percentage), format='json' )"
+        """
+
+    # reading skymap
+    npix = len(hpx)
+    nside = hp.npix2nside(npix)
+
+    sort = sorted(hpx, reverse=True)
+    cumsum = np.cumsum(sort)
+    index, value = min(enumerate(cumsum), key=lambda x: abs(x[1] - percentage))
+
+    # finding ipix indices confined in a given percentage
+    index_hpx = range(0, len(hpx))
+    hpx_index = np.c_[hpx, index_hpx]
+
+    sort_2array = sorted(hpx_index, key=lambda x: x[0], reverse=True)
+    value_contour = sort_2array[0:index]
+
+    j = 1
+    table_ipix_contour = []
+
+    for i in range(0, len(value_contour)):
+        ipix_contour = int(value_contour[i][j])
+        table_ipix_contour.append(ipix_contour)
+
+    # from index to polar coordinates
+    theta, phi = hp.pix2ang(nside, table_ipix_contour)
+    # converting these to right ascension and declination in degrees
+    ra = np.rad2deg(phi)
+    dec = np.rad2deg(0.5 * np.pi - theta)
+
+    # creating an astropy.table with RA[deg] and DEC[deg] ipix positions
+    from astropy.table import Table
+    contour_ipix = Table([ra, dec], names=(
+        'RA[deg]', 'DEC[deg]'), meta={'ipix': 'ipix table'})
+
+    # setting MOC order
+    from math import log
+    moc_order = int(log(nside, 2))
+
+    # creating a MOC map from the contour_ipix table
+    moc = MOC.from_table(contour_ipix, 'RA[deg]', 'DEC[deg]', moc_order)
+
+    # writing MOC file in fits
+    if (save2File):
+        moc.write(short_name + '_MOC_' + str(percentage), format='fits')
+    return moc
+
+
+def Check2Dor3D(fitsfile, filename, distCut):
+    
+    distnorm = []
+    tdistmean = 0
+    tdiststd = 0
+    fitsfile = fits.open(filename)
+    has3D = True
+    skymap = lf.read_sky_map(filename)  
+    prob = skymap[0]
+
+    #Check if the skymap has 3D information
+    if (fitsfile[1].header['TFIELDS'] == 1):
+        has3D = False
+    else:
+        tdistmean = fitsfile[1].header['DISTMEAN']
+        tdiststd= fitsfile[1].header['DISTSTD']
+        # Check if the object is too far away to use a catalog
+        if tdistmean+2*tdiststd > distCut:
+            has3D = False
+
+    # Check if the hotspot is in the galactic plane
+    npix = len(prob)
+    NSide = hp.npix2nside(npix)
+    MaxPix = np.argmax(prob)
+    MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
+    raMax = np.rad2deg(MaxPhi)
+    decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
+    c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
+
+    InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
+    if InsidePlane:
+        has3D = False 
+    fitsfile.close()
+
+    return prob, has3D
+
+
+def Check2Dor3D_Flat(fitsfile, filename, distCut):
+
+    distnorm = []
+    tdistmean = 0
+    tdiststd = 0
+    fitsfile = fits.open(filename)
+    if (fitsfile[1].header['TFIELDS'] == 4):
+        prob, distmu, distsigma, distnorm = hp.read_map(filename,
+                                                        field=range(4))
+        tdistmean = fitsfile[1].header['DISTMEAN']
+        tdiststd= fitsfile[1].header['DISTSTD']
+    else:
+        prob = hp.read_map(fitsfile, field=range(1))
+
+    has3D = True
+    if len(distnorm) == 0:
+        has3D = False
+
+    npix = len(prob)
+    NSide = hp.npix2nside(npix)
+    MaxPix = np.argmax(prob)
+    MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
+    raMax = np.rad2deg(MaxPhi)
+    decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
+    c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
+
+    InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
+    if InsidePlane:
+        has3D = False
+
+    if tdistmean+2*tdiststd > distCut:
+        has3D = False
+    return prob, has3D
+
+######################################################
 
 def NightDarkObservation(time, obspar):
     '''
@@ -2108,122 +2353,6 @@ def ComputeProbPGALIntegrateFoV(prob, time, observatory, centerPoint, UsePix, vi
     return P_Gal, P_GW, noncircleGal, talreadysumipixarray
 
 
-def MOC_confidence_region(infile, percentage, short_name=' ', save2File=False):
-
-    # reading skymap
-    hpx = hp.read_map(infile, verbose=False)
-    npix = len(hpx)
-    nside = hp.npix2nside(npix)
-
-    sort = sorted(hpx, reverse=True)
-    cumsum = np.cumsum(sort)
-    index, value = min(enumerate(cumsum), key=lambda x: abs(x[1] - percentage))
-
-    # finding ipix indices confined in a given percentage
-    index_hpx = range(0, len(hpx))
-    hpx_index = np.c_[hpx, index_hpx]
-
-    sort_2array = sorted(hpx_index, key=lambda x: x[0], reverse=True)
-    value_contour = sort_2array[0:index]
-
-    j = 1
-    table_ipix_contour = []
-
-    for i in range(0, len(value_contour)):
-        ipix_contour = int(value_contour[i][j])
-        table_ipix_contour.append(ipix_contour)
-
-    # from index to polar coordinates
-    theta, phi = hp.pix2ang(nside, table_ipix_contour)
-    # converting these to right ascension and declination in degrees
-    ra = np.rad2deg(phi)
-    dec = np.rad2deg(0.5 * np.pi - theta)
-
-    # creating an astropy.table with RA[deg] and DEC[deg] ipix positions
-    from astropy.table import Table
-    contour_ipix = Table([ra, dec], names=(
-        'RA[deg]', 'DEC[deg]'), meta={'ipix': 'ipix table'})
-
-    # setting MOC order
-    from math import log
-    moc_order = int(log(nside, 2))
-
-    # creating a MOC map from the contour_ipix table
-    moc = MOC.from_table(contour_ipix, 'RA[deg]', 'DEC[deg]', moc_order)
-
-    # writing MOC file in fits
-    if (save2File):
-        moc.write(short_name + '_MOC_' + str(percentage), format='fits')
-    return moc
-
-
-def MOC_confidence_region2D(hpx, percentage, short_name=' ', save2File=False):
-    """
-        Multi-Order coverage map (MOC) of sky area enclosed within a contour plot
-        at a given confidence level.
-
-        Input:
-        infile: healpix format
-        LVC probability sky map
-        percentage: float
-        probability percentage of the enclosed area
-        short_name: str
-        output file name
-
-        Output: fits format
-        MOC map named "short_name"_"percentage"
-
-        Remark: for json format change the statement
-        "moc.write(short_name+'_MOC_'+str(percentage), format='fits' )" -->
-        "moc.write(short_name+'_MOC_'+str(percentage), format='json' )"
-        """
-
-    # reading skymap
-    npix = len(hpx)
-    nside = hp.npix2nside(npix)
-
-    sort = sorted(hpx, reverse=True)
-    cumsum = np.cumsum(sort)
-    index, value = min(enumerate(cumsum), key=lambda x: abs(x[1] - percentage))
-
-    # finding ipix indices confined in a given percentage
-    index_hpx = range(0, len(hpx))
-    hpx_index = np.c_[hpx, index_hpx]
-
-    sort_2array = sorted(hpx_index, key=lambda x: x[0], reverse=True)
-    value_contour = sort_2array[0:index]
-
-    j = 1
-    table_ipix_contour = []
-
-    for i in range(0, len(value_contour)):
-        ipix_contour = int(value_contour[i][j])
-        table_ipix_contour.append(ipix_contour)
-
-    # from index to polar coordinates
-    theta, phi = hp.pix2ang(nside, table_ipix_contour)
-    # converting these to right ascension and declination in degrees
-    ra = np.rad2deg(phi)
-    dec = np.rad2deg(0.5 * np.pi - theta)
-
-    # creating an astropy.table with RA[deg] and DEC[deg] ipix positions
-    from astropy.table import Table
-    contour_ipix = Table([ra, dec], names=(
-        'RA[deg]', 'DEC[deg]'), meta={'ipix': 'ipix table'})
-
-    # setting MOC order
-    from math import log
-    moc_order = int(log(nside, 2))
-
-    # creating a MOC map from the contour_ipix table
-    moc = MOC.from_table(contour_ipix, 'RA[deg]', 'DEC[deg]', moc_order)
-
-    # writing MOC file in fits
-    if (save2File):
-        moc.write(short_name + '_MOC_' + str(percentage), format='fits')
-    return moc
-
-
 def randomDate(start, end, prop):
     return strTimeProp(start, end, '%Y-%m-%d %H:%M:%S', prop)
 
@@ -2605,7 +2734,7 @@ def IsSourceInside(Pointings, Sources, FOV, nside):
     tt = 0.5 * np.pi - Sources.dec.rad
     tp = Sources.ra.rad
     txyz = hp.ang2pix(nside, tt, tp)
-    Npoiting = []
+    Npoiting = ''
     Found = False
     try:
         for i in range(0, len(Pointings)):
@@ -2626,7 +2755,8 @@ def IsSourceInside(Pointings, Sources, FOV, nside):
             # print(txyz in ipix_disc)
             if (txyz in ipix_disc):
                 print('Found in pointing number', i)
-                Npoiting.append(i)
+                #Npoiting.append(i)
+                Npoiting = Npoiting+str(i)+','
                 Found = True
         if Found == False:
             print('Source not covered!')
@@ -2640,11 +2770,14 @@ def IsSourceInside(Pointings, Sources, FOV, nside):
         # print(ipix_disc)
         # print(txyz in ipix_disc)
         if (txyz in ipix_disc):
-            Npoiting = 0
+            Npoiting = '0,'
             Found = True
             print('Found in pointing number 0')
         else:
             print('Source not covered!')
+    #Reformat output
+    if Found == True: 
+        Npoiting = Npoiting[:-1]
     return Found, Npoiting
 
 
@@ -2685,7 +2818,7 @@ def ProduceSummaryFileOld(Found, InputList, InputObservationList, allPossiblePoi
         f = open(outfilename, 'w')
         f.write(
             'ID' + ' ' + 'Distance' + ' ' + 'Theta' + ' ' + 'A90' + ' ' + 'Luminosity' + ' ' + 'TotalObservations' + ' ' + 'TotalPossible' + ' ' + 'FirstCovered' + ' ' + 'TimesFound' + ' ' + 'TotalProb' + ' ' + 'ObsInfo' + '\n')
-        f.write(str(InputList['ID'][j]) + + ' ' + str(
+        f.write(str(InputList['ID'][j]) + ' ' + str(
             InputList['Distance'][j]) + ' ' + str(InputList['theta'][j]) + ' ' + str(InputList['A90'][j]) + ' ' + str(
             luminosity) + ' ' + str(len(InputObservationList)) + ' ' + str(allPossiblePoint) + ' ' + str(
             foundFirst) + ' ' + str(foundTimes) + ' ' + str(totalProb) + ' ' + 'True' + '\n')
@@ -2738,18 +2871,11 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
     Found, nP = IsSourceInside(
         Pointings, Source, obspar.FOV, obspar.reducedNside)
     foundFirst = -1
-    if len(nP) == 0:
-        nP = 0
+    #if len(nP) == 0:
+    #    nP = 0
     if 'True' in SuggestedPointings['ObsInfo'] and Found == True:
         print('Found in scheduled observation:', nP)
-
-        if type(nP) != int:
-            FoundFirst = nP[0]
-            # nP = len(nP)
-        print(SuggestedPointingsC[nP])
-        print()
-
-        # print('Plotting the observations')
+        FoundFirst = nP[0]
 
         # --- Writting down the results ---
         pointingsFileC = '%s/%s_cov.txt' % (dirNameSch, ID)
@@ -2789,6 +2915,78 @@ def ProduceSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, t
         FillSummary(outfilename, ID, 0, totalPoswindow,
                     foundFirst, nP, totalPGW, str(0))
 
+
+def ProducePandasSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obspar, typeSimu, datasetDir, outDir, configID):
+
+    # Where to save results
+    dirNameFile = outDir + '/PandasSummaryFile/'
+    print(dirNameFile)
+    
+    if not os.path.exists(dirNameFile):
+        os.makedirs(dirNameFile)
+    # What should be in the pandas file is the following: 
+    # 
+    # Is the source inside?
+    maskClean = (SuggestedPointings['ObsInfo'] == 'True')
+    SuggestedPointingsC = SuggestedPointings[maskClean]
+
+    Pointings = SkyCoord(SuggestedPointingsC['RA[deg]'], SuggestedPointingsC['DEC[deg]'], frame='fk5',
+                         unit=(u.deg, u.deg))
+
+    # Check if the source is covered by the scheduled pointings
+    Found, nP = IsSourceInside(Pointings, Source, obspar.FOV, obspar.reducedNside)
+
+    totalPGW = float('{:1.4f}'.format(float(sum(SuggestedPointingsC['PGW']))))
+    
+    # Rename columns 
+    SuggestedPointingsC.rename_column('Observation Time UTC', 'obs_time_utc')
+    SuggestedPointingsC.rename_column('DEC[deg]', 'dec')
+    SuggestedPointingsC.rename_column('RA[deg]', 'ra')
+    SuggestedPointingsC.rename_column('Observatory', 'observatory')
+    SuggestedPointingsC.rename_column('ZenIni[deg]', 'zenith_init')
+    SuggestedPointingsC.rename_column('ZenEnd[deg]', 'zenith_end')
+    SuggestedPointingsC.rename_column('Duration[s]','duration')
+    SuggestedPointingsC.rename_column('Delay[s]','delay')
+
+    SuggestedPointingsC.remove_column('ObsInfo')
+    SuggestedPointingsC.remove_column('PGW')
+
+
+    if 'True' not in SuggestedPointings['ObsInfo']:
+        print('No observations are scheduled')
+        totalPGW = 0
+        totalObservations = 0
+        pointings = []
+    else: 
+        totalPGW = np.sum(SuggestedPointings['PGW'])
+        totalObservations = len(SuggestedPointingsC['ra'])
+        pointings = SuggestedPointingsC.to_pandas().to_dict(orient='records')
+        # Convert all values to strings in the list of dictionaries
+        # for my_dict in pointings:
+        #    for key in my_dict:
+        #        my_dict[key] = str(my_dict[key])
+        # Convert all values to strings
+        # pointings_as_strings = {key: str(value) for key, value in pointings.items()}
+
+        print(pointings)
+    data = {
+        'obs_run': str(ID),
+        'config_file': str(configID),
+        'total_observations': str(totalObservations),
+        'total_prob': str(totalPGW),
+        'pointings_found': str(nP),
+        'found': str(Found),
+        'n_found': str(len(nP)), 
+        'pointings': [np.array(pointings)], 
+    }
+
+    print(data)
+    # Create the DataFrame
+    df = pd.DataFrame(data)
+
+    # Display the DataFrame
+    print(df)
+    # df.to_parquet(dirNameFile+str(ID)+'_'+configID+'.parquet')
 
 def ReadSummaryFile(summaryFile):
     print('Note that this function needs to be adapted to the output')
@@ -2861,6 +3059,10 @@ class NextWindowTools:
             time = Tools.PreviousMoonset(time, obsSite)
         return time
 
+    @classmethod
+    def AddRunDuration_to_StartingTime(cls, obspar):  
+        previousTime = np.genfromtxt(obspar.pointingsFile, usecols=(0),skip_header=1, unpack=True, dtype='str')   
+        obspar.obsTime = datetime.datetime.strptime(str(previousTime), '%Y-%m-%dT%H:%M:%S')+ datetime.timedelta(minutes=np.float64(obspar.duration))
 
 def ZenithAngleCut_TwoTimes(prob, nside, time, time1, minProbcut, maxZenith, observatory):
     '''
@@ -2918,8 +3120,7 @@ def ZenithAngleCut_TwoTimes(prob, nside, time, time1, minProbcut, maxZenith, obs
     return ObsBool, yprob
 
 
-def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, time,
-                                        DelayObs, interObsSlew, obspar, ID, ipixlist, ipixlistHR, counter, datasetDir, outDir, useGreytime, plot):
+def ComputeProbability2D_SelectClusters(prob, highres, radecs, conf, time, DelayObs, interObsSlew, obspar, ID, ipixlist, ipixlistHR, counter, datasetDir, outDir, useGreytime, plot):
     '''
     Compute probability in 2D by taking the highest value pixel
     '''
@@ -2990,13 +3191,13 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
 
     # Fill a the column EXPOSURE column. Corresponds to the time that one needs to observe to get 5sigma for the highest of the list
     # Three cases depending on the IRFs that should be used (60,40,20)
-    grbSensPath = '/grbsens_output_v3_Sep_2022/alpha_configuration/'
+    grbSensPath = '/grbsens_output_v3_Sep_2022/'+ conf +'_configuration_EBL/grbsens-5.0sigma_t1s-t16384s_irf-'
+    print(datasetDir + grbSensPath +obspar.name+ "_z60_0.5h.txt")
     if (np.any(sortcat['ZENITH_INI'] > 55)):
         # ObsCase, texp60 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,datasetDir, zenith=60)
         # if observatory.name == "North":
         # "sensitivity-5sigma_irf-North_z20_0.5.txt"
-        grbSensFile = datasetDir + grbSensPath + \
-            "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+        grbSensFile = datasetDir + grbSensPath +obspar.name+ "_z60_0.5h.txt"
         grb_result = GetExposureForDetection(
             grbSensFile, grbFilename, DelayObs)
         print(grb_result)
@@ -3024,8 +3225,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
         # ObsCase, texp40 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar,datasetDir, zenith=40)
 
         # "sensitivity-5sigma_irf-North_z20_0.5.txt"
-        grbSensFile = datasetDir + grbSensPath + \
-            "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+        grbSensFile = datasetDir + grbSensPath + obspar.name + "_z40_0.5h.txt"
         grb_result = GetExposureForDetection(
             grbSensFile, grbFilename, DelayObs)
         print(grb_result)
@@ -3056,8 +3256,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
         # ObsCase, texp20 = ObtainSingleObservingTimes(TotalExposure, DelayObs, interObsSlew, ID, obspar, datasetDir, zenith=20)
 
         # "sensitivity-5sigma_irf-North_z20_0.5.txt"
-        grbSensFile = datasetDir + grbSensPath + \
-            "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+        grbSensFile = datasetDir + grbSensPath + obspar.name + "_z20_0.5h.txt"
         grb_result = GetExposureForDetection(
             grbSensFile, grbFilename, DelayObs)
         if (grb_result['obs_time'] == -1):
@@ -3081,7 +3280,7 @@ def ComputeProbability2D_SelectClusters(prob, highres, radecs, TotalExposure, ti
 
     # Check how many false values there are in the array
     # false_count = sum(not i for i in sortcat['EXPOSURE'])
-
+    
     # print("Number of False values:", false_count,'vs. the number of entries being', len(sortcat['EXPOSURE']))
     # Mask the catalog from the entries that are actually not feaseable from exposure value
     if False in sortcat['EXPOSURE']:

@@ -64,14 +64,14 @@ def GetSchedule_ConfigFile(obspar):
 
     print("===========================================================================================")
 
-    galaxies = obspar.datasetDir + obspar.galcatName
-    # cfgFile = "./configs/FollowupParameters.ini"
 
     ObservationTime = obspar.obsTime
     outputDir = "%s/%s" % (obspar.outDir, name)
 
     if has3D:
         dirName = f"{outputDir}/PGallinFoV"
+        galaxies = obspar.datasetDir + obspar.galcatName
+        # cfgFile = "./configs/FollowupParameters.ini"
     else:
         dirName = f"{outputDir}/PGinFoV"
 
@@ -116,9 +116,8 @@ def GetSchedule_ConfigFile(obspar):
         print("Filename: ", name)
         print("Date: ", obspar.obsTime)
         print("Previous pointings: ", obspar.pointingsFile)
-        print("Parameters: ", obspar.cfgFile)
         print("Dataset: ", obspar.datasetDir)
-        print("Output: ", obspar.outputDir)
+        print("Output: ", outputDir)
 
         SuggestedPointings, t0 = PGWinFoV(
             filename, obspar.obsTime, obspar.pointingsFile, obspar, dirName)
@@ -142,8 +141,7 @@ def GetSchedule_ConfigFile(obspar):
             print('No observations are scheduled')
 
 
-def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, name, lat, lon, height,
-                        sunDown, moonDown,
+def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, name, lat, lon, height, sunDown, moonDown,
                         moonGrey, moonPhase, minMoonSourceSeparation,
                         maxMoonSourceSeparation, maxZenith, FOV, maxRuns, maxNights,
                         duration, minDuration, useGreytime, minSlewing, online,
