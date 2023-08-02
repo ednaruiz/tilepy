@@ -768,7 +768,7 @@ def LoadHealpixMap(thisfilename):
     else:
         tdetectors = "Non specified"
 
-    if (fitsfile[1].header['TFIELDS'] == 1):
+    if (fitsfile[1].header['TFIELDS'] <= 2):
         skymap = lf.read_sky_map(thisfilename)  
         tprob = skymap[0]
     else:
@@ -1004,7 +1004,7 @@ def Check2Dor3D(fitsfile, filename, distCut):
     prob = skymap[0]
 
     #Check if the skymap has 3D information
-    if (fitsfile[1].header['TFIELDS'] == 1):
+    if (fitsfile[1].header['TFIELDS'] <= 2):
         has3D = False
     else:
         tdistmean = fitsfile[1].header['DISTMEAN']
@@ -1027,7 +1027,7 @@ def Check2Dor3D(fitsfile, filename, distCut):
         has3D = False 
     fitsfile.close()
 
-    return prob, has3D
+    return prob, has3D, NSide
 
 
 def Check2Dor3D_Flat(fitsfile, filename, distCut):
@@ -1062,7 +1062,7 @@ def Check2Dor3D_Flat(fitsfile, filename, distCut):
 
     if tdistmean+2*tdiststd > distCut:
         has3D = False
-    return prob, has3D
+    return prob, has3D, NSide
 
 ######################################################
 
