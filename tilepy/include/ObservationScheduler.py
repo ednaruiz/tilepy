@@ -48,7 +48,8 @@ def GetSchedule_ConfigFile(obspar):
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar.distCut)
+    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar)
+    
 
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :
@@ -180,13 +181,6 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
-    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, distCut)
-
-    print("===========================================================================================")
-    pointingsFile = "False"
-    galaxies = datasetDir + galcatname
-    # cfgFile = "./configs/FollowupParameters.ini"
-
     obspar = ObservationParameters()
     obspar.from_args(name, lat, lon, height, sunDown, moonDown,
                      moonGrey, moonPhase, minMoonSourceSeparation,
@@ -196,6 +190,12 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
                      zenithWeighting, percentageMOC, reducedNside, HRnside,
                      mangrove)
     
+    prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar)
+
+
+    print("===========================================================================================")
+    pointingsFile = "False"
+
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :
         print("reducing HRnside to the value from the original map: NSIDE=",origNSIDE)
@@ -208,7 +208,7 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
         ObservationTime = date
         outputDir = "%s/%s" % (outDir, name)
         dirName = '%s/PGallinFoV' % outputDir
-
+        galaxies = obspar.datasetDir + obspar.galcatName
         if not os.path.exists(dirName):
             os.makedirs(dirName)
 

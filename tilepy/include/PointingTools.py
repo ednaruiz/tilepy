@@ -993,8 +993,9 @@ def MOC_confidence_region2D_Flat(hpx, percentage, short_name=' ', save2File=Fals
     return moc
 
 
-def Check2Dor3D(fitsfile, filename, distCut):
+def Check2Dor3D(fitsfile, filename, obspar):
     
+    distCut = obspar.distCut
     distnorm = []
     tdistmean = 0
     tdiststd = 0
@@ -1026,12 +1027,16 @@ def Check2Dor3D(fitsfile, filename, distCut):
     if InsidePlane:
         has3D = False 
     fitsfile.close()
-
+    
+    # Check if no galaxy catalog was given as has3D should be False
+    if obspar.galcatName == None:
+        has3D = False
     return prob, has3D, NSide
 
 
-def Check2Dor3D_Flat(fitsfile, filename, distCut):
+def Check2Dor3D_Flat(fitsfile, filename, obspar):
 
+    distCut = obspar.distCut
     distnorm = []
     tdistmean = 0
     tdiststd = 0
@@ -1061,6 +1066,10 @@ def Check2Dor3D_Flat(fitsfile, filename, distCut):
         has3D = False
 
     if tdistmean+2*tdiststd > distCut:
+        has3D = False
+
+    # Check if no galaxy catalog was given as has3D should be False
+    if obspar.galcatName =='False':
         has3D = False
     return prob, has3D, NSide
 

@@ -401,7 +401,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
     alreadysumipixarray2 = []
 
     #########################
-    if (PointingFile == 'False'):
+    if (PointingFile == None):
         tGals = tGals0
         print('No pointings were given to be substracted')
     else:
@@ -632,7 +632,7 @@ def PGalinFoV_PixRegion(filename,ObservationTime0,PointingFile,galFile, obspar,d
     alreadysumipixarray2 = []
     #########################
 
-    if (PointingFile == 'False'):
+    if (PointingFile == None):
         tGals = tGals0
         print('No pointings were given to be substracted')
     else:
