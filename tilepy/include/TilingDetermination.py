@@ -81,9 +81,7 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
 
     # Add observed pixels to pixlist
-    if (PointingFile == 'False'):
-        print('No pointings were given to be substracted')
-    else:
+    if (PointingFile != None):
         pixlist, P_GW = SubstractPointings2D(
             PointingFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
         print('Already observed probability =', P_GW)

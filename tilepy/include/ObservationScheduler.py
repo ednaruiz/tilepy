@@ -7,16 +7,15 @@
 from .TilingDetermination import PGWinFoV, PGalinFoV
 from .RankingObservationTimes import RankingTimes, RankingTimes_2D
 from .PointingPlotting import PointingPlotting
-from astropy.coordinates import SkyCoord
-from .PointingTools import Tools, LoadGalaxies, getdate, GetGBMMap, GetGWMap, Check2Dor3D, ObservationParameters
+from .PointingTools import GetGBMMap, GetGWMap, Check2Dor3D, ObservationParameters, GetAreaSkymap5090, GetAreaSkymap5090_Flat
 from astropy.io import fits, ascii
-import time
-import healpy as hp
-import numpy as np
+from astropy.table import QTable
 from astropy import units as u
-import datetime
+from pathlib import Path
 import os
 import json
+import numpy as np
+import healpy as hp
 import ligo.skymap.postprocess as lsp
 
 
@@ -49,7 +48,7 @@ def GetSchedule_ConfigFile(obspar):
         name = URL.split('/')[-3]
 
     prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar)
-    
+    print('AQUI', obspar.MO)
 
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :
@@ -59,8 +58,12 @@ def GetSchedule_ConfigFile(obspar):
         obspar.reducedNside = obspar.HRnside
 
     if obspar.locCut != None:
-        ra, dec, a, b, pa, area = lsp.ellipse.find_ellipse(prob, cl=90)
-        if (obspar.locCut== 'loose' and area > 10000) or (obspar.locCut== 'std' and area > 1000):
+        if(obspar.MO==True):
+            area_50, area_90 = GetAreaSkymap5090(filename)
+        if(obspar.MO==False):
+            area_50, area_90 = GetAreaSkymap5090_Flat(filename)
+        print('aqui',area_50,area_90)
+        if (obspar.locCut== 'loose' and area_90 > 10000) or (obspar.locCut== 'std' and area_50 > 1000):
             return
 
     print("===========================================================================================")
@@ -194,7 +197,6 @@ def GetSchedule_funcarg(URL, date, datasetDir, galcatname, outDir, targetType, n
 
 
     print("===========================================================================================")
-    pointingsFile = "False"
 
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :

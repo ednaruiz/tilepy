@@ -35,6 +35,8 @@ import ligo.skymap.io.fits as lf
 from .gwobserve import Sensitivity, GRB
 from .observatory import Observatory
 import pandas as pd
+from astropy.table import QTable
+import astropy_healpix as ah
 
 if six.PY2:
     ConfigParser = configparser.SafeConfigParser
@@ -306,7 +308,7 @@ class ObservationParameters(object):
                  duration=None, minDuration=None, useGreytime=None, minSlewing=None, online=False,
                  minimumProbCutForCatalogue=None, minProbcut=None, distCut=None, doPlot=None, secondRound=None,
                  zenithWeighting=None, percentageMOC=None, reducedNside=None, HRnside=None,
-                 mangrove=None, url=None,obsTime=None,datasetDir=None,galcatName=None,outDir=None,pointingsFile=None,alertType=None, locCut=None):
+                 mangrove=None, url=None,obsTime=None,datasetDir=None,galcatName=None,outDir=None,pointingsFile=None,alertType=None, locCut=None, MO=False):
 
         self.name = name
         self.lat = lat
@@ -355,6 +357,9 @@ class ObservationParameters(object):
         self.pointingsFile = pointingsFile
         self.alertType = alertType
         self.locCut = locCut
+
+        #Characterstics of the event
+        self.MO = MO
 
     def __str__(self):
         txt = ''
@@ -725,7 +730,7 @@ def order_inds2uniq(order, inds):
     return uniq
 
 
-def LoadHealpixMap(thisfilename):
+def LoadHealpixMap(thisfilename, ):
     """
     Bottom-level function that downloads aLIGO HEALpix map and keep in cache. 
 
@@ -993,6 +998,14 @@ def MOC_confidence_region2D_Flat(hpx, percentage, short_name=' ', save2File=Fals
     return moc
 
 
+def IsMultiOrder(fields):
+    isMO = True
+    if fields==1:
+        isMO = False
+    if fields == 4:
+        isMO = False
+    return isMO
+
 def Check2Dor3D(fitsfile, filename, obspar):
     
     distCut = obspar.distCut
@@ -1005,6 +1018,7 @@ def Check2Dor3D(fitsfile, filename, obspar):
     prob = skymap[0]
 
     #Check if the skymap has 3D information
+    obspar.MO = IsMultiOrder(fitsfile[1].header['TFIELDS'])
     if (fitsfile[1].header['TFIELDS'] <= 2):
         has3D = False
     else:
@@ -2444,6 +2458,42 @@ def ModifyCataloguePIX(pix_ra1, pix_dec1, test_time, maxz, prob, cat, FOV, total
 
     ttcat = cat_pix[np.flipud(np.argsort(cat_pix['PIXFOVPROB']))]
     return ttcat
+
+def GetAreaSkymap5090(filename):
+    skymap = QTable.read(filename)
+    skymap.sort('PROBDENSITY', reverse=True)
+    level, ipix = ah.uniq_to_level_ipix(skymap['UNIQ'])
+    pixel_area = ah.nside_to_pixel_area(ah.level_to_nside(level))
+    prob = pixel_area * skymap['PROBDENSITY']
+    cumprob = np.cumsum(prob)
+    
+    i = cumprob.searchsorted(0.9)
+    area_90 = pixel_area[:i].sum()
+    area_90_deg =area_90.to_value(u.deg**2)
+    
+    j = cumprob.searchsorted(0.5)
+    area_50 = pixel_area[:j].sum()
+    area_50_deg = area_50.to_value(u.deg**2)
+    
+    return area_50_deg, area_90_deg
+
+def GetAreaSkymap5090_Flat(filename):
+    hpx = hp.read_map(f'{filename}')
+    npix = len(hpx)
+    nside = hp.npix2nside(npix)
+
+    i = np.flipud(np.argsort(hpx))
+    sorted_credible_levels = np.cumsum(hpx[i])
+    credible_levels = np.empty_like(sorted_credible_levels)
+    credible_levels[i] = sorted_credible_levels
+
+    area_50 = np.sum(credible_levels <= 0.5) * hp.nside2pixarea(nside, degrees=True)
+    print(f"50% area: {area_50} deg2")
+
+    area_90 = np.sum(credible_levels <= 0.9) * hp.nside2pixarea(nside, degrees=True)
+    print(f"90% area: {area_90} deg2")
+
+    return area_50, area_90
 
 
 def Get90RegionPixReduced(hpxx, percentage, Nnside):
