@@ -11,7 +11,6 @@ from .PointingTools import GetGBMMap, GetGWMap, Check2Dor3D, ObservationParamete
 from astropy.io import fits, ascii
 from astropy.table import QTable
 from astropy import units as u
-from pathlib import Path
 import os
 import json
 import numpy as np
@@ -48,7 +47,6 @@ def GetSchedule_ConfigFile(obspar):
         name = URL.split('/')[-3]
 
     prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar)
-    print('AQUI', obspar.MO)
 
     # adapting the resolutions to the one provided in the original map
     if (obspar.HRnside > origNSIDE) :
@@ -68,7 +66,6 @@ def GetSchedule_ConfigFile(obspar):
 
     print("===========================================================================================")
 
-
     ObservationTime = obspar.obsTime
     outputDir = "%s/%s" % (obspar.outDir, name)
 
@@ -81,6 +78,7 @@ def GetSchedule_ConfigFile(obspar):
 
     if not os.path.exists(dirName):
         os.makedirs(dirName)
+
 
     if has3D:
         print("===========================================================================================")
