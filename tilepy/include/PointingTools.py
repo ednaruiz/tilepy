@@ -3047,7 +3047,7 @@ def ProducePandasSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obs
 
         #print(pointings)
     data = {
-        'obs_run': str(ID),
+        'obs_run': int(ID),
         'config_file': str(configID),
         'total_observations': str(totalObservations),
         'total_prob': str(totalPGW),
@@ -3056,6 +3056,28 @@ def ProducePandasSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obs
         'n_found': str(len(nP)), 
         'pointings': list([pointings]), 
     }
+       
+    obs_run = configID.split('_')[0]
+    layout = configID.split('_')[1] 
+    has_ebl = False
+    if 'EBL' in configID:
+        has_ebl = True
+
+    data = {
+            'event_id': int(ID),
+            'cta_layout': str(layout),
+            'ebl': bool(has_ebl),
+            'obs_run': str(obs_run),
+            'config_file': str(configID),
+            'total_observations': int(totalObservations),
+            'total_prob': float(totalPGW),
+            'pointings_found': list([nP]),
+            'found': bool(Found),
+            'n_found': int(len(nP)), 
+            'pointings': list([pointings]), 
+        }
+
+
 
     #print(data)
     # Create the DataFrame
