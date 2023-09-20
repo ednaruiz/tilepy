@@ -121,16 +121,14 @@ def PGWinFoV(filename,ObservationTime0,PointingFile,obspar,dirName):
                             float('{:3.4f}'.format(float(TC.ra.deg))))
                         DECarray.append(
                             float('{:3.4f}'.format(float(TC.dec.deg))))
-                        ObservationTimearray.append(
-                            str(ObservationTime).split('.')[0])
+                        ObservationTimearray.append(ObservationTime.strftime("%Y-%m-%d %H:%M:%S"))
                         counter = counter+1
                 elif (P_GW >= obspar.minProbcut):
                     Round.append(1)
                     P_GWarray.append(float('{:1.4f}'.format(float(P_GW))))
                     RAarray.append(float('{:3.4f}'.format(float(TC.ra.deg))))
                     DECarray.append(float('{:3.4f}'.format(float(TC.dec.deg))))
-                    ObservationTimearray.append(
-                        str(ObservationTime).split('.')[0])
+                    ObservationTimearray.append(ObservationTime.strftime("%Y-%m-%d %H:%M:%S"))
                     counter = counter+1
         else:
             break
@@ -505,8 +503,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                             Round.append(2)
                             P_GALarray.append(float('{:1.4f}'.format(p_gal)))
                             P_GWarray.append(float('{:1.4f}'.format(p_gw)))
-                            ObservationTimearray.append(
-                                str(ObservationTime).split('.')[0])
+                            ObservationTimearray.append(ObservationTime.strftime("%Y-%m-%d %H:%M:%S"))
                             counter = counter + 1
 
                         else:  # NOTE: not sure if this should be added
@@ -519,8 +516,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
                             Round.append(1)
                             P_GALarray.append(float('{:1.4f}'.format(p_gal)))
                             P_GWarray.append(float('{:1.4f}'.format(p_gw)))
-                            ObservationTimearray.append(
-                                str(ObservationTime).split('.')[0])
+                            ObservationTimearray.append(ObservationTime.strftime("%Y-%m-%d %H:%M:%S"))
                             counter = counter + 1
                     else:
                         print("We are in round 1")
@@ -539,8 +535,7 @@ def PGalinFoV(filename,ObservationTime0,PointingFile,galFile,obspar,dirName):
 
                         P_GALarray.append(float('{:1.4f}'.format(p_gal)))
                         P_GWarray.append(float('{:1.4f}'.format(p_gw)))
-                        ObservationTimearray.append(
-                            str(ObservationTime).split('.')[0])
+                        ObservationTimearray.append(ObservationTime.strftime("%Y-%m-%d %H:%M:%S"))
                         counter = counter + 1
                         # ObservationTimearrayNamibia.append(Tools.UTCtoNamibia(ObservationTime))
 
@@ -1166,7 +1161,7 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, conf, dataset
                 # The event hasnt been found to be on the temporal FoV of the instrument
                 # print("===== RESULTS ========")
                 print('++++ The event is not in temporal FoV of the instrument +++++')
-                ObservationTimearray.append(str(ObservationTime).split('.')[0].split('+')[0])
+                ObservationTimearray.append(str(StartObsTime).split('.')[0].split('+')[0])
                 P_GWarray.append(0)
                 RAarray.append(0)
                 DECarray.append(0)
