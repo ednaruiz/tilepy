@@ -1186,6 +1186,8 @@ def PGWonFoV_WindowOptimisation(filename, timeStr, TC, parameters, conf, dataset
     # List of suggested pointings
     print("TOTAL POSSIBLE: ", counterTotalPossible, "DONE: ",
           counter, "Probability: ", np.sum(P_GWarray))
+    print(len(ObservationTimearray), len(RAarray), len(Obsarray), len(P_GWarray), len(ObsBoolarray), len(ZenIniarray), len(ZenEndarray), len(Exposure),
+         len(Delay))
     SuggestedPointings = Table(
         [ObservationTimearray, RAarray, DECarray, Obsarray, P_GWarray, ObsBoolarray, ZenIniarray, ZenEndarray, Exposure,
          Delay],

@@ -308,7 +308,7 @@ class ObservationParameters(object):
                  duration=None, minDuration=None, useGreytime=None, minSlewing=None, online=False,
                  minimumProbCutForCatalogue=None, minProbcut=None, distCut=None, doPlot=None, secondRound=None,
                  zenithWeighting=None, percentageMOC=None, reducedNside=None, HRnside=None,
-                 mangrove=None, url=None,obsTime=None,datasetDir=None,galcatName=None,outDir=None,pointingsFile=None,alertType=None, locCut=None, MO=False):
+                 mangrove=None, url=None,obsTime=None,datasetDir=None,galcatName=None,outDir=None,pointingsFile=None,alertType=None, locCut=None, MO=False, algorithm=None):
 
         self.name = name
         self.lat = lat
@@ -347,6 +347,7 @@ class ObservationParameters(object):
         self.reducedNside = reducedNside
         self.HRnside = HRnside
         self.mangrove = mangrove
+        self.algorithm=algorithm
 
         # Parsed args
         self.url = url 
@@ -443,6 +444,7 @@ class ObservationParameters(object):
             section, 'reducedNside', fallback=0))
         self.HRnside = int(parser.get(section, 'hrnside', fallback=0))
         self.mangrove = (parser.getboolean(section, 'mangrove', fallback=None))
+        self.algorithm = str(parser.get(section, 'algorithm', fallback=None))
 
     def from_args(self, name, lat, lon, height, sunDown, moonDown,
                   moonGrey, moonPhase, minMoonSourceSeparation,
@@ -605,7 +607,7 @@ def GetGWMap_Flat(URL):
     print("internal filename: ", newFilename)
 
     try:
-        command = 'curl %s -o %s' % (fits_map_url, newFilename)
+        command = f'curl {fits_map_url} -o {newFilename}'
         print(command)
         os.system(command)
     except x:
@@ -633,7 +635,7 @@ def GetGWMap(URL):
     print("The filename is ", filename)
     fits_map_url = URL
     try:
-        command = 'curl %s -o %s' % (fits_map_url, filename)
+        command = f'curl {fits_map_url} -o {filename}'
         print(command)
         os.system(command)
 
@@ -730,7 +732,7 @@ def order_inds2uniq(order, inds):
     return uniq
 
 
-def LoadHealpixMap(thisfilename, ):
+def LoadHealpixMap(thisfilename):
     """
     Bottom-level function that downloads aLIGO HEALpix map and keep in cache. 
 
@@ -1006,6 +1008,61 @@ def IsMultiOrder(fields):
         isMO = False
     return isMO
 
+def Intersect2D(filename,intersectionThres,obspar):
+
+    distCut = obspar.distCut
+    distnorm = []
+    tdistmean = 0
+    tdiststd = 0
+    fitsfile = fits.open(filename)
+    has3D = True
+    skymap = lf.read_sky_map(filename)  
+    prob = skymap[0]
+    
+    #Check if the skymap has 3D information
+    obspar.MO = IsMultiOrder(fitsfile[1].header['TFIELDS'])
+    if (fitsfile[1].header['TFIELDS'] <= 2):
+        has3D = False
+    else:
+        tdistmean = fitsfile[1].header['DISTMEAN']
+        tdiststd= fitsfile[1].header['DISTSTD']
+        # Check if the object is too far away to use a catalog
+        if tdistmean+2*tdiststd > distCut:
+            has3D = False
+    
+    nside = hp.npix2nside(len(prob))
+    npix = hp.nside2npix(nside)
+
+    theta, phi = hp.pix2ang(nside, np.arange(npix))
+
+    totprob = 0
+    ver = True
+
+    for i in range(len(theta)):
+        T = np.degrees(theta[i])
+        P = np.degrees(phi[i])
+
+        dec = np.radians(90 - T)
+        ra =  np.radians(P)
+
+        decngp = np.radians(27.13)
+        rangp = np.radians(192.85)
+        lncp = np.radians(122.93314)
+
+        sinb = np.sin(decngp) * np.sin(dec) + np.cos(decngp)*np.cos(dec)*np.cos(ra - rangp)
+        b = np.degrees(np.arcsin(sinb))
+        l = np.degrees(-np.arcsin( np.cos(dec)*np.sin(ra - rangp) / np.cos(b) ) +lncp)
+
+        if abs(b) <= 5:
+            totprob += prob[i]
+
+    if 1 >= totprob >= intersectionThres/100:
+        ver = False
+        return has3D, nside, totprob, ver #a big part of the GW falls behind the galactic plane, so we need to use the 3D method
+    elif intersectionThres/100 > totprob >= 0:
+        ver = True
+        return has3D, nside, totprob, ver #the percentage of GW behind the galactic plane is still low enough to apply the 2D method
+
 def Check2Dor3D(fitsfile, filename, obspar):
     
     distCut = obspar.distCut
@@ -1021,6 +1078,7 @@ def Check2Dor3D(fitsfile, filename, obspar):
     obspar.MO = IsMultiOrder(fitsfile[1].header['TFIELDS'])
     if (fitsfile[1].header['TFIELDS'] <= 2):
         has3D = False
+        print('aqui0')
     else:
         tdistmean = fitsfile[1].header['DISTMEAN']
         tdiststd= fitsfile[1].header['DISTSTD']
@@ -1028,23 +1086,30 @@ def Check2Dor3D(fitsfile, filename, obspar):
         if tdistmean+2*tdiststd > distCut:
             has3D = False
 
-    # Check if the hotspot is in the galactic plane
-    npix = len(prob)
-    NSide = hp.npix2nside(npix)
-    MaxPix = np.argmax(prob)
-    MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
-    raMax = np.rad2deg(MaxPhi)
-    decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
-    c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
-
-    InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
-    if InsidePlane:
-        has3D = False 
-    fitsfile.close()
-    
     # Check if no galaxy catalog was given as has3D should be False
     if obspar.galcatName == None:
         has3D = False
+
+    # Check if the algorithm type is declared in the config file 
+    if obspar.algorithm != None: 
+        if has3D == True:
+            if obspar.algorithm == '2D':
+                has3D = False 
+            
+    # Check if the hotspot is in the galactic plane
+    npix = len(prob)
+    NSide = hp.npix2nside(npix)
+    if obspar.algorithm == None:
+        MaxPix = np.argmax(prob)
+        MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
+        raMax = np.rad2deg(MaxPhi)
+        decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
+        c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
+
+        InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
+        if InsidePlane:
+            has3D = False 
+    fitsfile.close()
     return prob, has3D, NSide
 
 
@@ -1067,24 +1132,32 @@ def Check2Dor3D_Flat(fitsfile, filename, obspar):
     if len(distnorm) == 0:
         has3D = False
 
-    npix = len(prob)
-    NSide = hp.npix2nside(npix)
-    MaxPix = np.argmax(prob)
-    MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
-    raMax = np.rad2deg(MaxPhi)
-    decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
-    c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
-
-    InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
-    if InsidePlane:
-        has3D = False
-
-    if tdistmean+2*tdiststd > distCut:
-        has3D = False
-
     # Check if no galaxy catalog was given as has3D should be False
     if obspar.galcatName =='False':
         has3D = False
+    
+    # The distance fullfils the catalog cut
+    if tdistmean+2*tdiststd > distCut:
+        has3D = False
+
+    # Check if the algorithm type is declared in the config file 
+    if obspar.algorithm != None: 
+        if has3D == True:
+            if obspar.algorithm == '2D':
+                has3D = False 
+    npix = len(prob)
+    NSide = hp.npix2nside(npix)
+    if obspar.algorithm == None:  
+        MaxPix = np.argmax(prob)
+        MaxTheta, MaxPhi = hp.pix2ang(NSide, MaxPix)
+        raMax = np.rad2deg(MaxPhi)
+        decMax = np.rad2deg(0.5 * np.pi - MaxTheta)
+        c_icrs = SkyCoord(raMax, decMax, frame='fk5', unit=(u.deg, u.deg))
+
+        InsidePlane = Tools.GalacticPlaneBorder(c_icrs)
+        if InsidePlane:
+            has3D = False
+
     return prob, has3D, NSide
 
 ######################################################
@@ -2979,7 +3052,7 @@ def ProducePandasSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obs
 
     # Where to save results
     dirNameFile = outDir + '/PandasSummaryFile/'
-    print(dirNameFile)
+    #print(dirNameFile)
     
     if not os.path.exists(dirNameFile):
         os.makedirs(dirNameFile)
@@ -3027,25 +3100,50 @@ def ProducePandasSummaryFile(Source, SuggestedPointings, totalPoswindow, ID, obs
         # Convert all values to strings
         # pointings_as_strings = {key: str(value) for key, value in pointings.items()}
 
-        print(pointings)
+        #print(pointings)
     data = {
-        'obs_run': str(ID),
+        'obs_run': int(ID),
         'config_file': str(configID),
         'total_observations': str(totalObservations),
         'total_prob': str(totalPGW),
         'pointings_found': str(nP),
         'found': str(Found),
         'n_found': str(len(nP)), 
-        'pointings': [np.array(pointings)], 
+        'pointings': list([pointings]), 
     }
+       
+    obs_run = configID.split('_')[0]
+    layout = configID.split('_')[1] 
+    has_ebl = False
+    if 'EBL' in configID:
+        has_ebl = True
 
-    print(data)
+    data = {
+            'event_id': int(ID),
+            'cta_layout': str(layout),
+            'ebl': bool(has_ebl),
+            'obs_run': str(obs_run),
+            'config_file': str(configID),
+            'total_observations': int(totalObservations),
+            'total_prob': float(totalPGW),
+            'pointings_found': list([nP]),
+            'found': bool(Found),
+            'n_found': int(len(nP)), 
+            'pointings': list([pointings]), 
+        }
+
+
+
+    #print(data)
     # Create the DataFrame
     df = pd.DataFrame(data)
 
     # Display the DataFrame
-    print(df)
-    # df.to_parquet(dirNameFile+str(ID)+'_'+configID+'.parquet')
+    print(df.iloc[0].pointings)
+    df.to_parquet(dirNameFile+str(ID)+'_'+configID+'.parquet')
+    #import pickle
+    #with open(dirNameFile+str(ID)+'_'+configID+'.pkl', "wb") as f:
+    #    pickle.dump(df, f)
 
 def ReadSummaryFile(summaryFile):
     print('Note that this function needs to be adapted to the output')

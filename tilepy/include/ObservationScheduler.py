@@ -46,6 +46,7 @@ def GetSchedule_ConfigFile(obspar):
         fitsMap, filename = GetGWMap(URL)
         name = URL.split('/')[-3]
 
+    
     prob, has3D, origNSIDE = Check2Dor3D(fitsMap, filename, obspar)
 
     # adapting the resolutions to the one provided in the original map
@@ -60,8 +61,7 @@ def GetSchedule_ConfigFile(obspar):
             area_50, area_90 = GetAreaSkymap5090(filename)
         if(obspar.MO==False):
             area_50, area_90 = GetAreaSkymap5090_Flat(filename)
-        print('aqui',area_50,area_90)
-        if (obspar.locCut== 'loose' and area_90 > 10000) or (obspar.locCut== 'std' and area_50 > 1000):
+        if (obspar.locCut== 'loose' and area_90 > 10000) or (obspar.locCut== 'std' and area_50 > 1000) or (obspar.locCut== 'tight' and area_90 > 650) :
             return
 
     print("===========================================================================================")
