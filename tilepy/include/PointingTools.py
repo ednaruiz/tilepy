@@ -1008,6 +1008,61 @@ def IsMultiOrder(fields):
         isMO = False
     return isMO
 
+def Intersect2D(filename,intersectionThres,obspar):
+
+    distCut = obspar.distCut
+    distnorm = []
+    tdistmean = 0
+    tdiststd = 0
+    fitsfile = fits.open(filename)
+    has3D = True
+    skymap = lf.read_sky_map(filename)  
+    prob = skymap[0]
+    
+    #Check if the skymap has 3D information
+    obspar.MO = IsMultiOrder(fitsfile[1].header['TFIELDS'])
+    if (fitsfile[1].header['TFIELDS'] <= 2):
+        has3D = False
+    else:
+        tdistmean = fitsfile[1].header['DISTMEAN']
+        tdiststd= fitsfile[1].header['DISTSTD']
+        # Check if the object is too far away to use a catalog
+        if tdistmean+2*tdiststd > distCut:
+            has3D = False
+    
+    nside = hp.npix2nside(len(prob))
+    npix = hp.nside2npix(nside)
+
+    theta, phi = hp.pix2ang(nside, np.arange(npix))
+
+    totprob = 0
+    ver = True
+
+    for i in range(len(theta)):
+        T = np.degrees(theta[i])
+        P = np.degrees(phi[i])
+
+        dec = np.radians(90 - T)
+        ra =  np.radians(P)
+
+        decngp = np.radians(27.13)
+        rangp = np.radians(192.85)
+        lncp = np.radians(122.93314)
+
+        sinb = np.sin(decngp) * np.sin(dec) + np.cos(decngp)*np.cos(dec)*np.cos(ra - rangp)
+        b = np.degrees(np.arcsin(sinb))
+        l = np.degrees(-np.arcsin( np.cos(dec)*np.sin(ra - rangp) / np.cos(b) ) +lncp)
+
+        if abs(b) <= 5:
+            totprob += prob[i]
+
+    if 1 >= totprob >= intersectionThres/100:
+        ver = False
+        return has3D, nside, totprob, ver #a big part of the GW falls behind the galactic plane, so we need to use the 3D method
+    elif intersectionThres/100 > totprob >= 0:
+        ver = True
+        return has3D, nside, totprob, ver #the percentage of GW behind the galactic plane is still low enough to apply the 2D method
+
 def Check2Dor3D(fitsfile, filename, obspar):
     
     distCut = obspar.distCut
