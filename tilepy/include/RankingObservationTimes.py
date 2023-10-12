@@ -438,6 +438,7 @@ def Sortingby(galPointing, targetType, name, exposure):
 
     gwgalPointing.remove_column('Observation window')
     gwgalPointing.remove_column('Priority')
+    print(name)
 
     target = [(targetType + '_' + name.split('/')[2] +
                '_{0}').format(element) for element in gwgalPointing['Pointing']]

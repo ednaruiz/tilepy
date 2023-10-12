@@ -157,22 +157,16 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
             if ITERATION_OBS == len(obsparameters):
                 TIME_MIN_ALL = []
                 ITERATION_OBS = 0
-            print("we are here 1")
             ITERATION_OBS += 1
             print(TIME_MIN, NewActiveObsTime[j], SameNight[j])
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
-                print("we are here 1")
                 ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
                                             obspar.maxZenith, obspar.location, obspar.minMoonSourceSeparation, obspar.useGreytime)
-                print("we are here 11")
-                print(ObsBool)
                 if ObsBool:
-                    print("we are here 111")
                     # Round 1
                     P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
                                                                          obspar.location, obspar.maxZenith, obspar.FOV, name, pixlist, ipixlistHR, counter, dirName, obspar.useGreytime, obspar.doPlot)
                     # print(P_GW, obspar.name)
-                    print("we are here 2")
                     if ((P_GW <= obspar.minProbcut) and obspar.secondRound):
                         # Try Round 2
                         # print('The minimum probability cut being', minProbcut * 100, '% is, unfortunately, not reached.')
@@ -181,7 +175,6 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
                                                                                obspar.location, obspar.maxZenith, obspar.FOV, name, pixlist1, ipixlistHR1, counter, dirName, obspar.useGreytime, obspar.doPlot)
                         if ((P_GW <= obspar.minProbcut)):
                             print('Fail')
-                            print("we are here 3")
                         else:
                             Round.append(2)
                             P_GWarray.append(
@@ -192,7 +185,6 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
                                 float('{:3.4f}'.format(float(TC.dec.deg))))
                             ObservationTime = str(
                                 ObservationTime).split('+')[0]
-                            print("we are here 4")
                             try:
                                 ObservationTime = datetime.datetime.strptime(
                                     ObservationTime, '%Y-%m-%d %H:%M:%S')
@@ -204,7 +196,6 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
                             ObservationTimearray.append(ObservationTime)
                             ObsName.append(obspar.name)
                             counter = counter + 1
-                            print("we are here 5")
 
                     elif (P_GW >= obspar.minProbcut):
                         Round.append(1)

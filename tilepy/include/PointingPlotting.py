@@ -122,7 +122,7 @@ def PointingPlotting(prob, obspar, name, dirName, PointingsFile1, ObsArray, file
     # PlotPointingsTogether(prob,converted_time1[0],Coordinates1,sum(Probarray1),name1,Coordinates2,sum(Probarray2),name2, nside, obspar.FOV, doPlot=True)
     PlotPointings(prob, converted_time1, Coordinates1, sum(
         Probarray1), nside, obspar, name, dirName, ObsArray)
-    # PlotPointings_Pretty(filename, obspar.name, PointingsFile1, dirName)
+    PlotPointings_Pretty(prob, obspar.name, PointingsFile1, dirName)
 
 
 def PlotPointings(prob, time, targetCoord, Totalprob, nside, obspar, name, dirName, ObsArray):
@@ -684,15 +684,15 @@ def PlotPointings_Pretty(filename, name, PointingsFile1, dirName):
 
     ax.grid()
     ax.mark_inset_axes(ax_inset)
-    ax.connect_inset_axes(ax_inset, loc='upper left')
-    ax.connect_inset_axes(ax_inset, loc='lower left')
+    #ax.connect_inset_axes(ax_inset, loc='upper left')
+    #ax.connect_inset_axes(ax_inset, loc='lower left')
 
     ax.imshow_hpx(filename, cmap='cylon')
 
     for i in range(0, len(ra)):
 
         c = Circle((ra[i], dec[i]), 2.0, edgecolor='black', facecolor='none',
-                   transform=ax_inset.get_transform('fk5'), alpha=15)
+                   transform=ax_inset.get_transform('fk5'), alpha=1)
         ax_inset.add_patch(c)
         # To have more details in the plot
         # ax_inset.text(ra[i]-2.5, dec[i]-1, "%d\n%s \n %d%% %d deg " % (i,time[i], 100*pgw[i],pgal[i]),transform=ax_inset.get_transform('fk5'), color = 'k', rotation = -15, fontsize = 8)
