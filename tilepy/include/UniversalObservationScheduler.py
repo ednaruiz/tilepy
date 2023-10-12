@@ -31,10 +31,11 @@ utc = pytz.UTC
 ############################################
 
 
-def ObservationStartperObs(ObsArray, obsparameters, ObservationTime0):
+def ObservationStartperObs(obsparameters, ObservationTime0):
+    print("obsparameters", len(obsparameters))
     # Finding the start time for each observatory and checking if it's now
-    FirstDark = np.full(len(ObsArray), False, dtype=bool)
-    FirstDark_Flag = np.full(len(ObsArray), False, dtype=bool)
+    FirstDark = np.full(len(obsparameters), False, dtype=bool)
+    FirstDark_Flag = np.full(len(obsparameters), False, dtype=bool)
     # print(len(ObsFirstTime))
     obs_time = ObservationTime0
     if obs_time.tzinfo is None:
@@ -42,7 +43,7 @@ def ObservationStartperObs(ObsArray, obsparameters, ObservationTime0):
     ObsFirstTime = []
 
     j = 0
-    for obspar1 in ObsArray:
+    for obspar1 in obsparameters:
 
         dark_at_start = False
 
@@ -79,10 +80,10 @@ def ObservationStartperObs(ObsArray, obsparameters, ObservationTime0):
     # Checking which observatories are availabe for observations and saving their start time
     ActiveObsStart = []
     ActiveObs = []
-    SameNight = np.full(len(ObsArray), False, dtype=bool)
+    SameNight = np.full(len(obsparameters), False, dtype=bool)
 
     j = 0
-    for obspar in ObsArray:
+    for obspar in obsparameters:
         if FirstDark_Flag[j]:
             if ObsFirstTime[j].tzinfo is None:
                 ObsFirstTime = utc.localize(ObsFirstTime[j])
@@ -101,10 +102,8 @@ def ObservationStartperObs(ObsArray, obsparameters, ObservationTime0):
     return obs_time, SameNight, NewActiveObs, NewActiveObsStart
 
 
-def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName, ObsArray, obsparameters):
-
-    obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(
-        ObsArray, obsparameters, ObservationTime0)
+def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparameters):
+    obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(obsparameters, ObservationTime0)
 
     # START
 #################################################################################################################################################
@@ -132,11 +131,10 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
         prob, obspar.percentageMOC, obspar.reducedNside)
     radecs = co.SkyCoord(rapix, decpix, frame='fk5', unit=(u.deg, u.deg))
     # Add observed pixels to pixlist
-    if (PointingsFile == 'False'):
-        print('No pointings were given to be substracted')
-    else:
+    if (PointingFile != None):
+        print(PointingFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
         pixlist, P_GW = SubstractPointings2D(
-            PointingsFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
+            PointingFile, prob, obspar.reducedNside, obspar.FOV, pixlist)
         print('Already observed probability =', P_GW)
 #################################################################################################################################################
     ITERATION_OBS = 0
@@ -152,20 +150,18 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingsFile, parameters, dirName
     while (i < 500) & any(SameNight):
         for j in range(len(NewActiveObs)):
             obspar = NewActiveObs[j]
-            obsstart = NewActiveObsStart[j]
             # print(j)
             # print(NewActiveObs[0].name)
             # print(obspar.name)
             ObservationTime = NewActiveObsTime[j]
-            if ITERATION_OBS == len(ObsArray):
+            if ITERATION_OBS == len(obsparameters):
                 TIME_MIN_ALL = []
                 ITERATION_OBS = 0
-
             ITERATION_OBS += 1
-
+            print(TIME_MIN, NewActiveObsTime[j], SameNight[j])
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
                 ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
-                                                obspar.maxZenith, obspar.location, obspar.minMoonSourceSeparation, obspar.useGreytime)
+                                            obspar.maxZenith, obspar.location, obspar.minMoonSourceSeparation, obspar.useGreytime)
                 if ObsBool:
                     # Round 1
                     P_GW, TC, pixlist, ipixlistHR = ComputeProbability2D(prob, highres, radecs, obspar.reducedNside, obspar.HRnside, obspar.minProbcut, ObservationTime,
