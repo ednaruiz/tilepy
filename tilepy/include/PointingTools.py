@@ -246,6 +246,8 @@ class Tools:
         else:
             print('No window found')
             Observe = False
+        if obspar.sunDown > 10:
+            Observe = True 
 
         return Observe
 
@@ -257,6 +259,8 @@ class Tools:
         else:
             print('No window found')
             Observe = False
+        if obspar.sunDown > 10:
+            Observe = True 
 
         return Observe
 
