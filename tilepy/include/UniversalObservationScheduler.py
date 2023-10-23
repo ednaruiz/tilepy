@@ -229,6 +229,9 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
                 if obsparameters[j].useGreytime:
                     if not Tools.CheckWindowGrey(NewActiveObsTime[j], obspar):
                         SameNight[j] = False
+                if obspar.sunDown > 10:
+                    if NewActiveObsTime[j] > obs_time + datetime.timedelta(hours=24):
+                        SameNight[j] = False
 
                 NUMBER_OBS[j] += 1
 
@@ -430,6 +433,9 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamet
                         SameNight[j] = False
                 if obsparameters[j].useGreytime:
                     if not Tools.CheckWindowGrey(NewActiveObsTime[j], obspar):
+                        SameNight[j] = False
+                if obspar.sunDown > 10:
+                    if NewActiveObsTime[j] > obs_time + datetime.timedelta(hours=24):
                         SameNight[j] = False
 
                 NUMBER_OBS[j] += 1
