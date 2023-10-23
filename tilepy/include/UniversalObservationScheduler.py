@@ -158,7 +158,6 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
                 TIME_MIN_ALL = []
                 ITERATION_OBS = 0
             ITERATION_OBS += 1
-            print(TIME_MIN, NewActiveObsTime[j], SameNight[j])
             if (TIME_MIN >= NewActiveObsTime[j]) & SameNight[j]:
                 ObsBool, yprob = ZenithAngleCut(prob, nside, ObservationTime, obspar.minProbcut,
                                             obspar.maxZenith, obspar.location, obspar.minMoonSourceSeparation, obspar.useGreytime)
@@ -248,11 +247,9 @@ def PGWinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamete
     return SuggestedPointings, obsparameters
 
 
-def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters, dirName, ObsArray, obsparameters):
+def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparameters):
 
-    obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(
-        ObsArray, obsparameters, ObservationTime0)
-
+    obs_time, SameNight, NewActiveObs, NewActiveObsStart = ObservationStartperObs(obsparameters, ObservationTime0)
     # START
 #################################################################################################################################################
     name = filename.split('.')[0].split('/')[-1]
@@ -276,6 +273,8 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
     nside = hp.npix2nside(npix)
 
     # load galaxy catalogue
+    galFile = obspar.datasetDir + obspar.galcatName
+    
     if not obspar.mangrove:
         cat = LoadGalaxies(galFile)
     else:
@@ -291,7 +290,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
             prob, distmu, distsigma, thisDistance, thisDistanceErr, distnorm, cat, has3D, obspar.minimumProbCutForCatalogue)
 
     # Add observed pixels to pixlist
-    if (PointingFile == 'False'):
+    if (PointingFile == None):
         tGals = tGals0
         print('No pointings were given to be substracted')
     else:
@@ -324,7 +323,7 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, galFile, parameters
         for j in range(len(NewActiveObs)):
             obspar = NewActiveObs[j]
             ObservationTime = NewActiveObsTime[j]
-            if ITERATION_OBS == len(ObsArray):
+            if ITERATION_OBS == len(obsparameters):
                 TIME_MIN_ALL = []
                 ITERATION_OBS = 0
 
