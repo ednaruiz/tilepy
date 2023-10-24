@@ -386,6 +386,20 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamet
                                 DECarray.append(float('{:3.4f}'.format(
                                     float(finalGals2['DEJ2000'][:1]))))
                                 Round.append(2)
+                                P_GALarray.append(float('{:1.4f}'.format(p_gal)))
+                                P_GWarray.append(float('{:1.4f}'.format(p_gw)))
+                                ObservationTime = str(ObservationTime).split('.')[0]
+                                try:
+                                    ObservationTime = datetime.datetime.strptime(
+                                        ObservationTime, '%Y-%m-%d %H:%M:%S')
+                                except:
+                                    ObservationTime = str(
+                                        ObservationTime).split('+')[0]
+                                    ObservationTime = datetime.datetime.strptime(
+                                        ObservationTime, '%Y-%m-%d %H:%M:%S')
+                                ObservationTimearray.append(ObservationTime)
+                                ObsName.append(obspar.name)
+                                counter = counter + 1
 
                         else:
                             # print("\n=================================")
@@ -399,20 +413,20 @@ def PGalinFoV_NObs(filename, ObservationTime0, PointingFile, dirName, obsparamet
                             DECarray.append(float('{:3.4f}'.format(
                                 float(finalGals['DEJ2000'][:1]))))
                             Round.append(1)
-                        P_GALarray.append(float('{:1.4f}'.format(p_gal)))
-                        P_GWarray.append(float('{:1.4f}'.format(p_gw)))
-                        ObservationTime = str(ObservationTime).split('.')[0]
-                        try:
-                            ObservationTime = datetime.datetime.strptime(
-                                ObservationTime, '%Y-%m-%d %H:%M:%S')
-                        except:
-                            ObservationTime = str(
-                                ObservationTime).split('+')[0]
-                            ObservationTime = datetime.datetime.strptime(
-                                ObservationTime, '%Y-%m-%d %H:%M:%S')
-                        ObservationTimearray.append(ObservationTime)
-                        ObsName.append(obspar.name)
-                        counter = counter + 1
+                            P_GALarray.append(float('{:1.4f}'.format(p_gal)))
+                            P_GWarray.append(float('{:1.4f}'.format(p_gw)))
+                            ObservationTime = str(ObservationTime).split('.')[0]
+                            try:
+                                ObservationTime = datetime.datetime.strptime(
+                                    ObservationTime, '%Y-%m-%d %H:%M:%S')
+                            except:
+                                ObservationTime = str(
+                                    ObservationTime).split('+')[0]
+                                ObservationTime = datetime.datetime.strptime(
+                                    ObservationTime, '%Y-%m-%d %H:%M:%S')
+                            ObservationTimearray.append(ObservationTime)
+                            ObsName.append(obspar.name)
+                            counter = counter + 1
                         # ObservationTimearrayNamibia.append(Tools.UTCtoNamibia(ObservationTime))
 
                     else:
