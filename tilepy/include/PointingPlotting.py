@@ -122,7 +122,7 @@ def PointingPlotting(prob, obspar, name, dirName, PointingsFile1, ObsArray, file
     # PlotPointingsTogether(prob,converted_time1[0],Coordinates1,sum(Probarray1),name1,Coordinates2,sum(Probarray2),name2, nside, obspar.FOV, doPlot=True)
     PlotPointings(prob, converted_time1, Coordinates1, sum(
         Probarray1), nside, obspar, name, dirName, ObsArray)
-    PlotPointings_Pretty(prob, obspar.name, PointingsFile1, dirName)
+    PlotPointings_Pretty(prob, name, PointingsFile1, dirName, obspar)
 
 
 def PlotPointings(prob, time, targetCoord, Totalprob, nside, obspar, name, dirName, ObsArray):
@@ -632,18 +632,27 @@ def PlotZenithAngleLines_fromID(ID, InputFileName, dirName, FOV, ObsArray):
         GWFile, name, dirName, FOV, InputTimeList[j], ObsArray)
 
 
-def PlotPointings_Pretty(filename, name, PointingsFile1, dirName):
+def PlotPointings_Pretty(filename, name, PointingsFile1, dirName, obspar):
 
     # Read the pointings file
     tpointingFile = PointingsFile1
     # tpointingFile = '/Users/mseglar/Documents/GitLab/lst_gwfollowup/output/bn180720598/PGWinFoV/RankingObservationTimes_Complete.txt'
     time = []
     try:
-        time1, time2, ra, dec, pgw, pgal, Round = np.genfromtxt(tpointingFile, usecols=(
-            0, 1, 2, 3, 4, 5, 6), skip_header=1, delimiter=' ', unpack=True, dtype='str')  # ra, dec in degrees
+        time1, time2, ra, dec, pgw, pgal, Round, nametel = np.genfromtxt(tpointingFile, usecols=(
+            0, 1, 2, 3, 4, 5, 6, 7), skip_header=1, delimiter=' ', unpack=True, dtype='str')  # ra, dec in degrees
     except:
-        time1, time2, ra, dec, pgw, Round = np.genfromtxt(tpointingFile, usecols=(
-            0, 1, 2, 3, 4, 5), skip_header=1, delimiter=' ', unpack=True, dtype='str')  # ra, dec in degrees
+        try:
+            time1, time2, ra, dec, pgw, Round, nametel = np.genfromtxt(tpointingFile, usecols=(
+                0, 1, 2, 3, 4, 5, 6), skip_header=1, delimiter=' ', unpack=True, dtype='str')  # ra, dec in degrees
+        except:
+            try:
+                time1, time2, ra, dec, pgw, pgal, Round  = np.genfromtxt(tpointingFile, usecols=(
+                    0, 1, 2, 3, 4, 5, 6), skip_header=1, delimiter=' ', unpack=True, dtype='str')  # ra, dec in degrees
+            except:
+                time1, time2, ra, dec, pgw, Round  = np.genfromtxt(tpointingFile, usecols=(
+                    0, 1, 2, 3, 4, 5), skip_header=1, delimiter=' ', unpack=True, dtype='str')  # ra, dec in degrees
+        
         pgal = pgw
         pgal[:] = -1
     # print(time1, time2)
@@ -664,7 +673,7 @@ def PlotPointings_Pretty(filename, name, PointingsFile1, dirName):
     }
     coolheat = colors.LinearSegmentedColormap('coolheat', cdict_coolheat, 1024)
 
-    center = SkyCoord(ra[0], dec[0], unit='deg', frame='icrs')
+    center = SkyCoord(ra[3], dec[3], unit='deg', frame='icrs')
     center_str = '%fd %fd' % (center.ra.deg, center.dec.deg)
 
     # start preparing figure and inset figure
@@ -688,10 +697,22 @@ def PlotPointings_Pretty(filename, name, PointingsFile1, dirName):
     #ax.connect_inset_axes(ax_inset, loc='lower left')
 
     ax.imshow_hpx(filename, cmap='cylon')
+    
 
     for i in range(0, len(ra)):
+        COLORS = 'k'
+        fov_plot = 2
+        try:
+            if nametel[i] == "HESS":
+                COLORS = 'k'
+                fov_plot = 2
+            if nametel[i] == "LST":
+                COLORS = 'r'
+                fov_plot =  2
+        except:
+            print("Ploting with one telescope")
 
-        c = Circle((ra[i], dec[i]), 2.0, edgecolor='black', facecolor='none',
+        c = Circle((ra[i], dec[i]), fov_plot, edgecolor=COLORS, facecolor="None",
                    transform=ax_inset.get_transform('fk5'), alpha=1)
         ax_inset.add_patch(c)
         # To have more details in the plot
