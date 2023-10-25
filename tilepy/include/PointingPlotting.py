@@ -673,7 +673,7 @@ def PlotPointings_Pretty(filename, name, PointingsFile1, dirName, obspar):
     }
     coolheat = colors.LinearSegmentedColormap('coolheat', cdict_coolheat, 1024)
 
-    center = SkyCoord(ra[3], dec[3], unit='deg', frame='icrs')
+    center = SkyCoord(ra[0], dec[0], unit='deg', frame='icrs')
     center_str = '%fd %fd' % (center.ra.deg, center.dec.deg)
 
     # start preparing figure and inset figure
