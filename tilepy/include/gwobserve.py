@@ -27,10 +27,10 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 
+
 # classes
 class Sensitivity:
     def __init__(self, grbsens_file: str, min_energy: float, max_energy: float) -> None:
-
         self.output = self.fit_grbsens(grbsens_file)
         print(grbsens_file)
         self.energy_limits = (min_energy, max_energy)
@@ -38,7 +38,6 @@ class Sensitivity:
     def parse_grbsens(
         self, grbsens_file, Separator="\t", names=None, orient="list"
     ) -> dict:
-
         as_dict = pd.read_csv(
             grbsens_file, sep=Separator, comment="#", names=names
         ).to_dict(orient=orient)
@@ -46,7 +45,6 @@ class Sensitivity:
         return as_dict
 
     def open_grbsens(self, grbsens_file) -> dict:
-
         col_names = [
             "obs_time",
             "crab_flux",
@@ -59,7 +57,6 @@ class Sensitivity:
         return sensi_list
 
     def fit_grbsens(self, grbsens_file):
-
         grbsens = self.open_grbsens(grbsens_file)
 
         result = scipy.stats.linregress(
@@ -69,7 +66,6 @@ class Sensitivity:
         return result
 
     def get(self, t):
-
         slope, intercept = (
             self.output.slope,
             self.output.intercept,
@@ -85,7 +81,6 @@ class GRB:
         min_energy: str = None,
         max_energy: str = None,
     ) -> None:
-
         self.filepath = filepath
         self.min_energy, self.max_energy = min_energy, max_energy
         self.seen = False
@@ -95,7 +90,6 @@ class GRB:
         self.error_message = ""
 
         with fits.open(filepath) as hdu_list:
-
             self.long = hdu_list[0].header["LONG"]
             self.lat = hdu_list[0].header["LAT"]
             self.eiso = hdu_list[0].header["EISO"]
@@ -125,13 +119,11 @@ class GRB:
         return f"<GRB(run={self.run}, id={self.id})>"
 
     def set_spectral_grid(self):
-
         self.SpectralGrid = RegularGridInterpolator(
             (np.log10(self.energy), np.log10(self.time)), self.spectra
         )
 
     def show_spectral_pattern(self, resolution=100):
-
         self.set_spectral_grid()
 
         loge = np.around(np.log10(self.energy), 1)
@@ -156,7 +148,6 @@ class GRB:
         plt.colorbar(label="spectrum")
 
     def get_spectrum(self, time, energy=None):
-
         if not energy:
             energy = self.energy
 
@@ -168,7 +159,6 @@ class GRB:
             return self.SpectralGrid((np.log10(energy), np.log10(time)))
 
     def get_flux(self, energy, time=None):
-
         if not time:
             time = self.time
 
@@ -180,7 +170,6 @@ class GRB:
             return self.SpectralGrid((np.log10(energy), np.log10(time)))
 
     def fit_spectral_indices(self):
-
         spectra = self.spectra.T
 
         indices = []
@@ -188,11 +177,9 @@ class GRB:
         bad_times = []
 
         for spectrum, time in zip(spectra, self.time):
-
             idx = np.isfinite(spectrum) & (spectrum > 0)
 
             if len(idx[idx] > 3):  # need at least 3 points in the spectrum to fit
-
                 times.append(time)
                 indices.append(
                     np.polyfit(np.log10(self.energy[idx]), np.log10(spectrum[idx]), 1)[
@@ -213,11 +200,9 @@ class GRB:
         )
 
     def get_spectral_index(self, time):
-
         return self.index_at(np.array([np.log10(time)]))[0]
 
     def show_spectral_evolution(self, resolution=100):
-
         self.fit_spectral_indices()
 
         t = np.linspace(
@@ -231,7 +216,6 @@ class GRB:
         plt.show()
 
     def get_integral_spectrum(self, time, first_energy_bin):
-
         if not self.min_energy or not self.max_energy:
             raise ValueError("Please set min and max energy for integral spectrum.")
 
@@ -250,7 +234,6 @@ class GRB:
         return integral_spectrum
 
     def get_fluence(self, start_time, stop_time):
-
         first_energy_bin = min(self.energy)
 
         fluence = integrate.quad(
@@ -263,7 +246,6 @@ class GRB:
         return fluence
 
     def output(self):
-
         keys_to_drop = [
             "time",
             "energy",
@@ -296,7 +278,6 @@ class GRB:
         return o
 
     def check_if_visible(self, sensitivity: Sensitivity, start_time, stop_time):
-
         # Interpolation and integration of the flux with time
         average_flux = self.get_fluence(start_time, stop_time) / (
             stop_time - start_time
@@ -323,11 +304,9 @@ class GRB:
         target_precision=1,
         _max_loops=1000,
     ):
-
         """Modified version to increase timestep along with time size"""
 
         try:
-
             # set energy limits to match the sensitivity
             if not min_energy or not max_energy:
                 self.min_energy, self.max_energy = sensitivity.energy_limits
@@ -345,7 +324,6 @@ class GRB:
 
             # not visible even after maximum observation time
             if not visible:
-
                 return self.output()
 
             loop_number = 0
@@ -355,14 +333,12 @@ class GRB:
 
             # find the inflection point
             while loop_number < _max_loops:
-
                 loop_number += 1
                 visible = self.check_if_visible(
                     sensitivity, delay, delay + observation_time
                 )
 
                 if visible:
-
                     # if desired precision is reached, return results and break!
                     if np.log10(precision) == np.log10(target_precision):
                         round_precision = int(-np.log10(precision))

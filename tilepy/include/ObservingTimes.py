@@ -17,8 +17,8 @@ from scipy.interpolate import interp1d
 #######################################################
 
 # Get Script name
-ScriptName = os.path.split(sys.argv[0])[1].split('.')[0]
-grbSensPath = '/grbsens_output_v3_Sep_2022/alpha_configuration/'
+ScriptName = os.path.split(sys.argv[0])[1].split(".")[0]
+grbSensPath = "/grbsens_output_v3_Sep_2022/alpha_configuration/"
 
 
 def ParseCatalog(catFileName, Separator="\t"):
@@ -31,15 +31,17 @@ def ParseCatalog(catFileName, Separator="\t"):
     SourceList = []
     for di in range(3, len(datalist)):
         Source = {}
-        line = datalist[di].strip('\n').split(Separator)
-        if (line[-1] == ''):
+        line = datalist[di].strip("\n").split(Separator)
+        if line[-1] == "":
             line = line[:-1]
         for li in range(len(line)):
-            Source[header[li]] = line[li].strip('')
+            Source[header[li]] = line[li].strip("")
         SourceList.append(Source)
 
     # print('Read',len(SourceList),'sources')
     return SourceList
+
+
 #
 # def TableMoonSun(startTime,observatory):
 #
@@ -49,11 +51,11 @@ def ParseCatalog(catFileName, Separator="\t"):
 
 # Defining the function to fit the sensitivity vs observing time
 def fs(x, a, b, c, d):
-    return a * (x ** b + x ** c + x ** d)
+    return a * (x**b + x**c + x**d)
 
 
 def spectrum(x):
-    return (x/1)**(-2.2)
+    return (x / 1) ** (-2.2)
 
 
 def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, zenith):
@@ -75,12 +77,14 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
     # site=site[j].strip()
 
     if observatory.name == "North":
-
         if int(zenith) == 20:
             # sensitivity CTA North, zenit=20 deg
             # "sensitivity-5sigma_irf-North_z20_0.5.txt"
-            sensifilenorthz20 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+            sensifilenorthz20 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+            )
 
             SensiListNorthz20 = ParseCatalog(sensifilenorthz20)
             ndatasnz20 = len(SensiListNorthz20)
@@ -88,9 +92,9 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             xn20 = []
             yn20 = []
             for i in range(0, ndatasnz20):
-                obstimen20 = float(SensiListNorthz20[i]['Obs time'])
-                pfluxn20 = float(SensiListNorthz20[i]['photon_flux'])
-                efluxn20 = float(SensiListNorthz20[i]['energy_flux'])
+                obstimen20 = float(SensiListNorthz20[i]["Obs time"])
+                pfluxn20 = float(SensiListNorthz20[i]["photon_flux"])
+                efluxn20 = float(SensiListNorthz20[i]["energy_flux"])
 
                 xn20.append(obstimen20)
                 yn20.append(pfluxn20)
@@ -101,11 +105,15 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             def sensi(x):
                 return fsn20(x)
                 # return fs(x,*parn20)
+
         elif int(zenith) == 40:
             ###############
             # sensitivity CTA North, zenit=40 deg
-            sensifilenorthz40 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-North_z40_0.5h.txt"
+            sensifilenorthz40 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-North_z40_0.5h.txt"
+            )
 
             SensiListNorthz40 = ParseCatalog(sensifilenorthz40)
             ndatasnz40 = len(SensiListNorthz40)
@@ -113,9 +121,9 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             xn40 = []
             yn40 = []
             for i in range(0, ndatasnz40):
-                obstimen40 = float(SensiListNorthz40[i]['Obs time'])
-                pfluxn40 = float(SensiListNorthz40[i]['photon_flux'])
-                efluxn40 = float(SensiListNorthz40[i]['energy_flux'])
+                obstimen40 = float(SensiListNorthz40[i]["Obs time"])
+                pfluxn40 = float(SensiListNorthz40[i]["photon_flux"])
+                efluxn40 = float(SensiListNorthz40[i]["energy_flux"])
 
                 xn40.append(obstimen40)
                 yn40.append(pfluxn40)
@@ -126,11 +134,15 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             def sensi(x):
                 return fsn40(x)
                 # return fs(x,*parn40)
+
         else:
             ###############
             # sensitivity CTA North, zenit=60 deg
-            sensifilenorthz60 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-North_z60_0.5h.txt"
+            sensifilenorthz60 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-North_z60_0.5h.txt"
+            )
 
             SensiListNorthz60 = ParseCatalog(sensifilenorthz60)
             ndatasnz60 = len(SensiListNorthz60)
@@ -138,9 +150,9 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             xn60 = []
             yn60 = []
             for i in range(0, ndatasnz60):
-                obstimen60 = float(SensiListNorthz60[i]['Obs time'])
-                pfluxn60 = float(SensiListNorthz60[i]['photon_flux'])
-                efluxn60 = float(SensiListNorthz60[i]['energy_flux'])
+                obstimen60 = float(SensiListNorthz60[i]["Obs time"])
+                pfluxn60 = float(SensiListNorthz60[i]["photon_flux"])
+                efluxn60 = float(SensiListNorthz60[i]["energy_flux"])
 
                 xn60.append(obstimen60)
                 yn60.append(pfluxn60)
@@ -151,13 +163,17 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             def sensi(x):
                 return fsn60(x)
                 # return fs(x,*parn60)
+
     else:
         if int(zenith) == 20:
             ###############
             # sensitivity CTA South, zenit=20 deg
 
-            sensifilesouthz20 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-South_z20_0.5h.txt"
+            sensifilesouthz20 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-South_z20_0.5h.txt"
+            )
 
             SensiListSouthz20 = ParseCatalog(sensifilesouthz20)
             ndatassz20 = len(SensiListSouthz20)
@@ -165,9 +181,9 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             xs20 = []
             ys20 = []
             for i in range(0, ndatassz20):
-                obstimes20 = float(SensiListSouthz20[i]['Obs time'])
-                pfluxs20 = float(SensiListSouthz20[i]['photon_flux'])
-                efluxs20 = float(SensiListSouthz20[i]['energy_flux'])
+                obstimes20 = float(SensiListSouthz20[i]["Obs time"])
+                pfluxs20 = float(SensiListSouthz20[i]["photon_flux"])
+                efluxs20 = float(SensiListSouthz20[i]["energy_flux"])
 
                 xs20.append(obstimes20)
                 ys20.append(pfluxs20)
@@ -178,11 +194,15 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             def sensi(x):
                 return fss20(x)
                 # return fs(x,*pars20)
+
         elif int(zenith) == 40:
             ###############
             # sensitivity CTA South, zenit=40 deg
-            sensifilesouthz40 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-South_z40_0.5h.txt"
+            sensifilesouthz40 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-South_z40_0.5h.txt"
+            )
 
             SensiListSouthz40 = ParseCatalog(sensifilesouthz40)
             ndatassz40 = len(SensiListSouthz40)
@@ -190,9 +210,9 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             xs40 = []
             ys40 = []
             for i in range(0, ndatassz40):
-                obstimes40 = float(SensiListSouthz40[i]['Obs time'])
-                pfluxs40 = float(SensiListSouthz40[i]['photon_flux'])
-                efluxs40 = float(SensiListSouthz40[i]['energy_flux'])
+                obstimes40 = float(SensiListSouthz40[i]["Obs time"])
+                pfluxs40 = float(SensiListSouthz40[i]["photon_flux"])
+                efluxs40 = float(SensiListSouthz40[i]["energy_flux"])
 
                 xs40.append(obstimes40)
                 ys40.append(pfluxs40)
@@ -203,11 +223,15 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             def sensi(x):
                 return fss40(x)
                 # return fs(x,*pars40)
+
         else:
             ###############
             # sensitivity CTA South, zenit=40 deg
-            sensifilesouthz60 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-South_z60_0.5h.txt"
+            sensifilesouthz60 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-South_z60_0.5h.txt"
+            )
 
             SensiListSouthz60 = ParseCatalog(sensifilesouthz60)
             ndatassz60 = len(SensiListSouthz60)
@@ -215,9 +239,9 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
             xs60 = []
             ys60 = []
             for i in range(0, ndatassz60):
-                obstimes60 = float(SensiListSouthz60[i]['Obs time'])
-                pfluxs60 = float(SensiListSouthz60[i]['photon_flux'])
-                efluxs60 = float(SensiListSouthz60[i]['energy_flux'])
+                obstimes60 = float(SensiListSouthz60[i]["Obs time"])
+                pfluxs60 = float(SensiListSouthz60[i]["photon_flux"])
+                efluxs60 = float(SensiListSouthz60[i]["energy_flux"])
 
                 xs60.append(obstimes60)
                 ys60.append(pfluxs60)
@@ -229,14 +253,13 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
                 return fss60(x)
                 # return fs(x,*pars60)
 
-#######################################################
-# Associating a GRB to the BNS mergers
-#######################################################
+    #######################################################
+    # Associating a GRB to the BNS mergers
+    #######################################################
 
-    InputGRB = dirName + \
-        "/GammaCatalogV2.0/%s_%s.fits" % (run, id.split('ger')[1])
+    InputGRB = dirName + "/GammaCatalogV2.0/%s_%s.fits" % (run, id.split("ger")[1])
     hdu_list = fits.open(InputGRB)
-# hdu_list.info()
+    # hdu_list.info()
 
     datalc = hdu_list[3].data
     datatime = hdu_list[2].data
@@ -262,8 +285,7 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
     # Starting the procedure
     #################################################
 
-
-# starting time of the observations
+    # starting time of the observations
     tstart = delayAlert  # +tslew # (s)
 
     # Loop over consecutive pointings
@@ -275,35 +297,36 @@ def ObtainObservingTimes(totaltime, delayAlert, run, id, observatory, dirName, z
         return (tstart, -1)
 
     # Loop over consecutive pointings
-    for n in range(0, totaltime-1):
-        if (n >= 1):  # Accounting for slewing time
+    for n in range(0, totaltime - 1):
+        if n >= 1:  # Accounting for slewing time
             tstart = tstart + 10
             t = t + 10
         for m in range(0, totaltime, 1):
-            t = tstart+m+dt
-            obst = t-tstart
+            t = tstart + m + dt
+            obst = t - tstart
 
             fluencen, errorn = integrate.quad(
-                lambda x: flux(x), tstart, t)  # ph/cm2/GeV
-            averagefluxn = fluencen*intl/obst  # ph/cm2/s
+                lambda x: flux(x), tstart, t
+            )  # ph/cm2/GeV
+            averagefluxn = fluencen * intl / obst  # ph/cm2/s
 
             if averagefluxn > sensi(obst):
-
-                if tstart+obst < totaltime:
+                if tstart + obst < totaltime:
                     Tstart.append(tstart)
                     Obst.append(obst)
                     tstart = tstart + obst
                     break
                     # outfile2n.write("%d\t%d\t%d\t%d\n"%(n,tstart,tend,obst))
-            if tstart+obst > totaltime:
+            if tstart + obst > totaltime:
                 return (Tstart, Obst)
                 # return (tstar,-1)
 
             # tstart=tstart+obst+tslewbtwn
 
 
-def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observatory, dirName, zenith):
-
+def ObtainSingleObservingTimes(
+    TotalExposure, tstart, interObsSlew, ID, observatory, dirName, zenith
+):
     E1 = 2
     E2 = 100000
     steps = 10  # Check every 10 seconds
@@ -322,12 +345,14 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
     # site=site[j].strip()
 
     if observatory.name == "North":
-
         if int(zenith) == 20:
             # sensitivity CTA North, zenit=20 deg
             # "sensitivity-5sigma_irf-North_z20_0.5.txt"
-            sensifilenorthz20 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+            sensifilenorthz20 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-North_z20_0.5h.txt"
+            )
 
             SensiListNorthz20 = ParseCatalog(sensifilenorthz20)
             ndatasnz20 = len(SensiListNorthz20)
@@ -335,9 +360,9 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             xn20 = []
             yn20 = []
             for i in range(0, ndatasnz20):
-                obstimen20 = float(SensiListNorthz20[i]['Obs time'])
-                pfluxn20 = float(SensiListNorthz20[i]['photon_flux'])
-                efluxn20 = float(SensiListNorthz20[i]['energy_flux'])
+                obstimen20 = float(SensiListNorthz20[i]["Obs time"])
+                pfluxn20 = float(SensiListNorthz20[i]["photon_flux"])
+                efluxn20 = float(SensiListNorthz20[i]["energy_flux"])
 
                 xn20.append(obstimen20)
                 yn20.append(pfluxn20)
@@ -348,11 +373,15 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             def sensi(x):
                 return fsn20(x)
                 # return fs(x,*parn20)
+
         elif int(zenith) == 40:
             ###############
             # sensitivity CTA North, zenit=40 deg
-            sensifilenorthz40 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-North_z40_0.5h.txt"
+            sensifilenorthz40 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-North_z40_0.5h.txt"
+            )
 
             SensiListNorthz40 = ParseCatalog(sensifilenorthz40)
             ndatasnz40 = len(SensiListNorthz40)
@@ -360,9 +389,9 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             xn40 = []
             yn40 = []
             for i in range(0, ndatasnz40):
-                obstimen40 = float(SensiListNorthz40[i]['Obs time'])
-                pfluxn40 = float(SensiListNorthz40[i]['photon_flux'])
-                efluxn40 = float(SensiListNorthz40[i]['energy_flux'])
+                obstimen40 = float(SensiListNorthz40[i]["Obs time"])
+                pfluxn40 = float(SensiListNorthz40[i]["photon_flux"])
+                efluxn40 = float(SensiListNorthz40[i]["energy_flux"])
 
                 xn40.append(obstimen40)
                 yn40.append(pfluxn40)
@@ -374,11 +403,15 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             def sensi(x):
                 return fsn40(x)
                 # return fs(x,*parn40)
+
         else:
             ###############
             # sensitivity CTA North, zenit=60 deg
-            sensifilenorthz60 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-North_z60_0.5h.txt"
+            sensifilenorthz60 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-North_z60_0.5h.txt"
+            )
 
             SensiListNorthz60 = ParseCatalog(sensifilenorthz60)
             ndatasnz60 = len(SensiListNorthz60)
@@ -386,9 +419,9 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             xn60 = []
             yn60 = []
             for i in range(0, ndatasnz60):
-                obstimen60 = float(SensiListNorthz60[i]['Obs time'])
-                pfluxn60 = float(SensiListNorthz60[i]['photon_flux'])
-                efluxn60 = float(SensiListNorthz60[i]['energy_flux'])
+                obstimen60 = float(SensiListNorthz60[i]["Obs time"])
+                pfluxn60 = float(SensiListNorthz60[i]["photon_flux"])
+                efluxn60 = float(SensiListNorthz60[i]["energy_flux"])
 
                 xn60.append(obstimen60)
                 yn60.append(pfluxn60)
@@ -398,13 +431,17 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             def sensi(x):
                 return fsn60(x)
                 # return fs(x,*parn60)
+
     else:
         if int(zenith) == 20:
             ###############
             # sensitivity CTA South, zenit=20 deg
 
-            sensifilesouthz20 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-South_z20_0.5h.txt"
+            sensifilesouthz20 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-South_z20_0.5h.txt"
+            )
 
             SensiListSouthz20 = ParseCatalog(sensifilesouthz20)
             ndatassz20 = len(SensiListSouthz20)
@@ -412,9 +449,9 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             xs20 = []
             ys20 = []
             for i in range(0, ndatassz20):
-                obstimes20 = float(SensiListSouthz20[i]['Obs time'])
-                pfluxs20 = float(SensiListSouthz20[i]['photon_flux'])
-                efluxs20 = float(SensiListSouthz20[i]['energy_flux'])
+                obstimes20 = float(SensiListSouthz20[i]["Obs time"])
+                pfluxs20 = float(SensiListSouthz20[i]["photon_flux"])
+                efluxs20 = float(SensiListSouthz20[i]["energy_flux"])
 
                 xs20.append(obstimes20)
                 ys20.append(pfluxs20)
@@ -425,11 +462,15 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             def sensi(x):
                 return fss20(x)
                 # return fs(x,*pars20)
+
         elif int(zenith) == 40:
             ###############
             # sensitivity CTA South, zenit=40 deg
-            sensifilesouthz40 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-South_z40_0.5h.txt"
+            sensifilesouthz40 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-South_z40_0.5h.txt"
+            )
 
             SensiListSouthz40 = ParseCatalog(sensifilesouthz40)
             ndatassz40 = len(SensiListSouthz40)
@@ -437,9 +478,9 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             xs40 = []
             ys40 = []
             for i in range(0, ndatassz40):
-                obstimes40 = float(SensiListSouthz40[i]['Obs time'])
-                pfluxs40 = float(SensiListSouthz40[i]['photon_flux'])
-                efluxs40 = float(SensiListSouthz40[i]['energy_flux'])
+                obstimes40 = float(SensiListSouthz40[i]["Obs time"])
+                pfluxs40 = float(SensiListSouthz40[i]["photon_flux"])
+                efluxs40 = float(SensiListSouthz40[i]["energy_flux"])
 
                 xs40.append(obstimes40)
                 ys40.append(pfluxs40)
@@ -450,11 +491,15 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             def sensi(x):
                 return fss40(x)
                 # return fs(x,*pars40)
+
         else:
             ###############
             # sensitivity CTA South, zenit=40 deg
-            sensifilesouthz60 = dirName + grbSensPath + \
-                "grbsens-5.0sigma_t1s-t16384s_irf-South_z60_0.5h.txt"
+            sensifilesouthz60 = (
+                dirName
+                + grbSensPath
+                + "grbsens-5.0sigma_t1s-t16384s_irf-South_z60_0.5h.txt"
+            )
 
             SensiListSouthz60 = ParseCatalog(sensifilesouthz60)
             ndatassz60 = len(SensiListSouthz60)
@@ -462,9 +507,9 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
             xs60 = []
             ys60 = []
             for i in range(0, ndatassz60):
-                obstimes60 = float(SensiListSouthz60[i]['Obs time'])
-                pfluxs60 = float(SensiListSouthz60[i]['photon_flux'])
-                efluxs60 = float(SensiListSouthz60[i]['energy_flux'])
+                obstimes60 = float(SensiListSouthz60[i]["Obs time"])
+                pfluxs60 = float(SensiListSouthz60[i]["photon_flux"])
+                efluxs60 = float(SensiListSouthz60[i]["energy_flux"])
 
                 xs60.append(obstimes60)
                 ys60.append(pfluxs60)
@@ -516,16 +561,15 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
 
     # The total time is defined for a night
     totaltime = TotalExposure + tstart
-    maxcounter = totaltime-(tstart+interObsSlew)
-    MaxObservationTime = 16380      # Max. observation time from GRBsens files
+    maxcounter = totaltime - (tstart + interObsSlew)
+    MaxObservationTime = 16380  # Max. observation time from GRBsens files
     for j in range(1, maxcounter):
         # t = tstart + m + interObsSlew
-        t = tstart + j*steps + interObsSlew
+        t = tstart + j * steps + interObsSlew
         # print("INCREASE from tstart = ", tstart," to t = ",t, "Total time = ",totaltime)
 
-        fluencen, errorn = integrate.quad(
-            lambda x: flux(x), tstart, t)  # ph/cm2/GeV
-        obst = t - (tstart+interObsSlew)
+        fluencen, errorn = integrate.quad(lambda x: flux(x), tstart, t)  # ph/cm2/GeV
+        obst = t - (tstart + interObsSlew)
         # print("Tobs mi reina",obst)
         averagefluxn = fluencen * intl / obst  # ph/cm2/s
         # print(' Averageflux achieved =', averagefluxn)
@@ -533,21 +577,21 @@ def ObtainSingleObservingTimes(TotalExposure, tstart, interObsSlew, ID, observat
 
         if averagefluxn > sensi(obst):  # The detection is possible
             if tstart + interObsSlew + obst < totaltime:
-                obsCase = 'True'
+                obsCase = "True"
                 return obsCase, obst
             else:
-                obsCase = 'TimeNotEnough'
+                obsCase = "TimeNotEnough"
                 obst = False
                 return obsCase, obst
         # There is not enough time to obtain a detection
-        if (tstart + interObsSlew + obst > totaltime):
+        if tstart + interObsSlew + obst > totaltime:
             print("Flux didnt reach the minimum value and the total time is OVER")
             obst = False
-            obsCase = 'TimeNotEnough'
+            obsCase = "TimeNotEnough"
             return obsCase, obst
         # There is not enough time to obtain a detection
-        if (obst+interObsSlew+steps > MaxObservationTime):
+        if obst + interObsSlew + steps > MaxObservationTime:
             print("Flux didnt reach the minimum value for this iteration")
             obst = False
-            obsCase = 'TimeNotEnoughIte'
+            obsCase = "TimeNotEnoughIte"
             return obsCase, obst
