@@ -3042,6 +3042,17 @@ def GetAreaSkymap5090_Flat(filename):
 
 
 def Get90RegionPixReduced(hpxx, percentage, Nnside):
+    '''
+    Get90RegionPixReduced Obtains the region that leaves behind a given percentage of probability. 
+
+    Args:
+        hpxx (_type_): Probability map
+        percentage (float): Percentage of the probability map that will not be considered 
+        Nnside (_type_): NSide of the map used for contour determination
+
+    Returns:
+        array: ra, dec, area of the reduced region 
+    '''
     nside = Nnside  # size of map used for contour determination
     hpx = hp.ud_grade(
         hpxx, nside_out=nside, power=-2, order_in="Nested", order_out="Nested"
@@ -3072,7 +3083,7 @@ def Get90RegionPixReduced(hpxx, percentage, Nnside):
     # creating an astropy.table with RA[deg] and DEC[deg] ipix positions
     # contour_ipix = Table([ra, dec], names=('RA[deg]', 'DEC[deg]'), meta={'ipix': 'ipix table'})
 
-    # reducing resolution to et a faser execution
+    # reducing resolution to get a faser execution
     # list of pixel indices in the new map
     R_ipix = hp.ang2pix(Nnside, theta1, phi1)
     R_ipix = list(set(R_ipix))  # Removing/keeping 1 duplicate from list)
