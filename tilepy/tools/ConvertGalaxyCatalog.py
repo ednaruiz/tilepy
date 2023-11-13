@@ -1,3 +1,4 @@
+"""Conver Galaxy Catalog executable"""
 import argparse
 import logging
 import os.path
