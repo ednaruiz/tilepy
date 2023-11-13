@@ -22,9 +22,9 @@ python -m pip install -r requirements.txt
 
 Requirements of the installation: 
 
-- The current version of the package **only** runs with `python>=3.9`. Python 3.9 is recommended. Careful as well with the versions of matplotlib and healpy, they should be the ones explicited in the requirements.yml, otherwise there will be conflicts between them when plotting skymaps.  
-- Note that by creating the env from the environment.yml, the libraries and versions needed will be installed authomatically.
-- Note that everytime we made changes to the package, you should update the installation of the package doing ```pip install .``` in the folder where the setup.py is. The changes will be only applied to the env where you are working. 
+- The current version of the package **only** runs with `python>=3.9`. Python 3.9 is recommended. Careful as well with the versions of matplotlib and healpy, they should be the ones explicitly specified in the requirements.yml, otherwise there will be conflicts between them when plotting skymaps.  
+- Note that by creating the env from the environment.yml, the libraries and versions needed will be installed automatically.
+- Note that every time we make changes to the package, you should update the installation of the package doing ```pip install .``` in the folder where the setup.py is. The changes will be only applied to the env where you are working. 
 - The package relies on 'curl' to download the localisaton map of the multi-messenger events.
 
 In the case you are working in CC-Lyon, the easiest solution is to do```ccenv conda ``` and then follow the instructions given above. 
@@ -59,7 +59,7 @@ Package including functions to perform GW follow-up scheduling and simulations i
           - maxMoonSourceSeparation: max separation Source-Moon in deg to define greyness conditions
 
         - [operations]
-          - maxZenith: max zenith angle which will be considered as accesible sky
+          - maxZenith: max zenith angle which will be considered as accessible sky
           - FOV: radius of the circular FoV defining the tiles
           - maxRuns: maximum number of tiles that will be scheduled
           - maxNights: total number of nights considered
@@ -70,7 +70,7 @@ Package including functions to perform GW follow-up scheduling and simulations i
         - [tiling]
           - online: tbd
           - minimumProbCutforCatalogue: only galaxies that have probabilities higher than 'minimumProbCutforCatalogue x (GW x galaxy)_max' participate in the scheduling calculation
-          - minProbcut:  minimal probability covered per tile to schedule observation
+          - minProbcut:  minimal probability covered per tile to schedule an observation
           - distCut: distance cut to define the mandatory use of 2D strategy (coming from galaxy catalogue completeness)
           - doPlot: produce detailed plots of the scheduling
           - secondRound: consider two maps for scheduling 
@@ -82,8 +82,8 @@ Package including functions to perform GW follow-up scheduling and simulations i
 
 ## Creation of the reduced galaxy file
 
-For using the 3D algorithm tilepy need to have access to a galaxy catalog. Currently, the only supported catalog is GLADE+. You'll find the download link on this webpage : https://glade.elte.hu.
-To prepare it for usage by tilepy we provide a the `ConvertGalaxyCatalog.py` script that converts the original catalog into a hdf5 file compatible with tilepy. The script is located in the `tilepy/tools` repository.
+For using the 3D algorithm tilepy needs to have access to a galaxy catalog. Currently, the only supported catalog is GLADE+. You'll find the download link on this webpage : https://glade.elte.hu.
+To prepare it for usage by tilepy we provide the `ConvertGalaxyCatalog.py` script that converts the original catalog into a hdf5 file compatible with tilepy. The script is located in the `tilepy/tools` repository.
 
 Example: use the script to keep only galaxies that are within 500 Mpc (recommended). It reads the downloaded `GLADE+.txt` file and creates the output file `converted_GLADE.h5` which is the one that should be used with tilepy.
 
@@ -92,6 +92,6 @@ python ConvertGalaxyCatalog.py --input GLADE+.txt --output converted_GLADE.h5 --
 ```
 
 ## Help
-If any problem is found, please open a new issue in the project main page to document it. You can of course also directly create a Pull Request with new features.
+If any problem is found, please open a new issue on the project main page to document it. You can of course also directly create a Pull Request with new features.
 
-Otherwise you can also contact us at astro.tilepy@gmail.com. 
+Otherwise, you can also contact us at astro.tilepy@gmail.com. 
