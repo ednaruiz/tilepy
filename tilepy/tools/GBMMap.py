@@ -3,22 +3,32 @@
 import logging 
 
 
+from astropy.time import Time
+from astropy.io import fits
+import healpy as hp
+
 class GBMMap:
     def __init__(self, grbname, trigger_time):
+        '''
+        __init__ Initialize a container of the a GBM probability map
+
+        Args:
+            grbname (str): GBM trigger number
+            trigger_time (str): GRB trigger time in isot format (DD-MM-YYYYHhh:mm:ss)
+        '''
         self.logger = logging.getLogger(__name__)
 
         t = Time(trigger_time, format = "isot")
-        year = t.datetime.year
+        self.year = t.datetime.year
         self.grbname = grbname
-        self.filename = self.get_fits_filename(grbname, year)
-        self.fits = self.open_fitsfile(self.filename)
+        self.filename = self.get_fits_filename()
+        self.fits = self.open_fitsfile()
         self.prob = hp.read_map(self.filename, field = range(1))
 
         self.npix = len(self.prob)
         self.nside = hp.npix2nside(self.npix)
 
-    @staticmethod
-    def get_fits_filename(grbname, year):
+    def get_fits_filename(self):
         '''
         get_fits_filename 
         Given a GBM trigger name and year obtain the 
@@ -34,7 +44,7 @@ class GBMMap:
         
         fits_map_url = ""
 
-        fits_map_url_intial = "http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/%i/bn%s/quicklook/glg_locplot_all_bn%s.png"%(year, grbname, grbname)
+        fits_map_url_intial = "http://heasarc.gsfc.nasa.gov/FTP/fermi/data/gbm/triggers/%i/bn%s/quicklook/glg_locplot_all_bn%s.png"%(self.year, self.grbname, self.grbname)
         fits_map_url1 = fits_map_url_intial.split("/")
 
         fits_map_url2 =  fits_map_url_intial.split("_")[-1]
@@ -48,11 +58,20 @@ class GBMMap:
 
         return filename
     
-    @staticmethod
-    def open_fitsfile(filename):
+    def open_fitsfile(self):
+        '''
+        open_fitsfile Open the GBM fitsfile
+        (ToDo, probably there is a astropy function like this already)
+
+        Args:
+            filename (str): fits filename
+
+        Returns:
+            array: array containing the fits fields
+        '''
 
         try:
-            fitsfile = fits.open(filename)
+            fitsfile = fits.open(self.filename)
             return fitsfile
         except HTTPError as err:
             self.logger.error("Region fits file does not exist, skipping GRB")
