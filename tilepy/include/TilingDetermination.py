@@ -2024,120 +2024,118 @@ def PGalonFoV_WindowsFromList(
     return SuggestedPointings, cat, FOV, nside
 
 
+@u.quantity_input(fov=u.deg, radius=u.deg)
 def get_gbm_tilings(gbm_grb, fov, radius, do_plot):
-    '''
+    """
     get_gbm_tilings _summary_
 
     Args:
-        gbm_grb (_type_): _description_
+        gbm_grb (tilepy.tools.GBMMap.GBMMap): _description_
         fov (_type_): _description_
         radius (_type_): _description_
         do_plot (_type_): _description_
 
     Returns:
         _type_: _description_
-    '''
-
-    
-    #get the centre of ra,dec, error_radius, for eventually filtering or doing
-    #separate stuff depending on error_radius
-    ra, dec, err = gbm_grb.fits[0].header["RA_OBJ"], gbm_grb.fits[0].header["DEC_OBJ"], gbm_grb.fits[0].header["ERR_RAD"]
-    #print("Map in ra = %f dec = %f and error = %f deg"%(ra,dec,err))
-
-    npix = gbm_grb.npix
+    """
     nside = gbm_grb.nside
+    reduced_nside = gbm_grb.nside
 
-    rapix, decpix, areapix = Get90RegionPixReduced(gbm_grb.prob, 0.68, nside)
-    #we create a SkyCoordinate for each point within the 90% region
-    radecs = co.SkyCoord(rapix *u.deg, decpix *u.deg, frame = 'fk5')
-    areapix = len(radecs)*hp.nside2pixarea(nside, degrees = True )
-
-    phi = radecs.ra.to("rad").value
-    theta = 0.5 * np.pi - radecs.dec.to("rad").value
-    pixels = hp.ang2pix(nside, theta, phi)
-
-    vect_pix = hp.ang2vec(theta, phi)
-
-    min_prob = 0.001
-    fov = fov*u.deg
-
+    reduced_ra, reduced_dec, reduced_area = GetRegionInPercentage(
+        gbm_grb.prob, reduced_nside, 0.68
+    )
+    reduced_theta, reduced_phi = ra_dec_to_theta_phi(reduced_ra, reduced_dec)
+    reduced_vect = hp.ang2vec(reduced_theta, reduced_phi)
 
     max_prob = 1
     min_prob = 0.001
-
-    ra_tiles, dec_tiles, proba_tiles = [], [], []
-
-
     found_pointings = 0
     n_pointings = 10
 
-    prob = gbm_grb.prob
-    #max_prob gets updated at the end of the first for loop, inside this while
+    ra_tiles, dec_tiles, proba_tiles = [], [], []
+
+    prob_copy = np.copy(gbm_grb.prob)
+    # max_prob gets updated at the end of the first for loop, inside this while
     while max_prob > min_prob and found_pointings < n_pointings:
+        print(fov)
         prob_disc = []
 
-        for i in range(0,len(vect_pix)):
-            pix_disc_i = hp.query_disc(nside, vect_pix[i], fov.to("rad").value)
-            #pix_disc_lon, pix_disc_lat = hp.pix2ang(nside, pix_disc_i)
-            #pix_disc_ra, pix_disc_dec = np.rad2deg(pix_disc_lat), np.rad2deg(0.5 * np.pi - pix_disc_lon)
+        for i in range(0, len(reduced_vect)):
+            pix_disc_i = hp.query_disc(nside, reduced_vect[i], fov.to_value("rad"))
 
-            pix_disc_prob = np.sum(prob[pix_disc_i])
+            pix_disc_prob = np.sum(prob_copy[pix_disc_i])
             prob_disc.append(pix_disc_prob)
 
         max_index, max_prob = np.argmax(prob_disc), np.max(prob_disc)
-        disc_max = hp.query_disc(nside, vect_pix[max_index], fov.to('rad').value)
-        max_disc_lon, max_disc_lat = hp.pix2ang(nside, disc_max)
-        max_disc_ra, max_disc_dec = np.rad2deg(max_disc_lat), np.rad2deg(0.5 * np.pi - max_disc_lon)
+        disc_max = hp.query_disc(nside, reduced_vect[max_index], fov.to_value("rad"))
 
-        centre_ra, centre_dec = radecs[max_index].ra.deg, radecs[max_index].dec.deg
+        centre_ra, centre_dec = reduced_ra[max_index], reduced_dec[max_index]
         ra_tiles.append(centre_ra)
         dec_tiles.append(centre_dec)
         proba_tiles.append(max_prob)
 
         for i in disc_max:
-            prob[i] = 0
+            prob_copy[i] = 0
 
-        found_pointings +=1
-    #print("Found %i pointings"%(len(ra_tiles)))
+        found_pointings += 1
 
-    #print(ra_tiles, dec_tiles, proba_tiles, areapix)
-    
+    print("Found %i pointings" % (len(ra_tiles)))
+
+    print(ra_tiles, dec_tiles, proba_tiles)
+
     if do_plot:
-        #radius = 1.0 #The actual FOV which is bigger than what we use above
+        hp.gnomview(gbm_grb.prob, rot=[gbm_grb.ra_centre, gbm_grb.dec_centre], reso=5.0)
 
-        #this is more to preserve the history of existance of code
-        #the use("Agg") at the beginning of the file needs to be commented
-        prob = hp.read_map(gbm_grb.filename, field=range(1))
-        
         nside = 1024
-        prob = hp.ud_grade(prob, nside, power = -2)#increase resolution so that we can actually querry the discs to plot the FOV circles
-        hp.gnomview(prob, rot = [ra,dec] , reso = 5.0)
+        prob = hp.ud_grade(
+            gbm_grb.prob, nside, power=-2
+        )  # increase resolution so that we can actually querry the discs to plot the FOV circles
 
-        for i in range(0,len(ra_tiles)):
-
-            targetCoord = co.SkyCoord(ra_tiles[i],dec_tiles[i], frame = 'icrs', unit = (u.deg,u.deg))
-            t = 0.5*np.pi-targetCoord.dec.rad
+        for i in range(0, len(ra_tiles)):
+            targetCoord = co.SkyCoord(
+                ra_tiles[i], dec_tiles[i], frame="icrs", unit=(u.deg, u.deg)
+            )
+            t = 0.5 * np.pi - targetCoord.dec.rad
             p = targetCoord.ra.rad
 
-            xyz = hp.ang2vec(t,p)
-            ipix_disc = hp.query_disc(nside, xyz, np.deg2rad(radius))
+            xyz = hp.ang2vec(t, p)
+            ipix_disc = hp.query_disc(nside, xyz, radius.to_value("rad"))
 
             tt, pp = hp.pix2ang(nside, ipix_disc)
             ra2 = np.rad2deg(pp)
-            dec2 = np.rad2deg(0.5*np.pi - tt)
-            skycoord = co.SkyCoord(ra2,dec2, frame = 'icrs', unit = (u.deg,u.deg))
+            dec2 = np.rad2deg(0.5 * np.pi - tt)
+            skycoord = co.SkyCoord(ra2, dec2, frame="icrs", unit=(u.deg, u.deg))
 
             separations = skycoord.separation(targetCoord)
-            tempmask = separations < (radius + 0.05 * radius) * u.deg
-            tempmask2 = separations > (radius - 0.05 * radius) * u.deg
+            tempmask = (
+                separations
+                < (radius.to_value("deg") + 0.05 * radius.to_value("deg")) * u.deg
+            )
+            tempmask2 = (
+                separations
+                > (radius.to_value("deg") - 0.05 * radius.to_value("deg")) * u.deg
+            )
 
-            hp.projplot(skycoord[tempmask & tempmask2].ra, skycoord[tempmask & tempmask2].dec, 'g.', lonlat=True,
-                                     coord="E", linewidth=0.1, markersize = 1)
+            hp.projplot(
+                skycoord[tempmask & tempmask2].ra,
+                skycoord[tempmask & tempmask2].dec,
+                "g.",
+                lonlat=True,
+                coord="E",
+                linewidth=0.1,
+                markersize=1,
+            )
 
-
-            hp.projscatter(ra_tiles[i],dec_tiles[i] , coord = "C",color = "red", marker = "x", lonlat = True)
+            hp.projscatter(
+                ra_tiles[i],
+                dec_tiles[i],
+                coord="C",
+                color="red",
+                marker="x",
+                lonlat=True,
+            )
 
         hp.graticule()
-        #plt.savefig(gbm_grb.grbname+"_Tiling_example.png")
+        # plt.savefig(gbm_grb.grbname+"_Tiling_example.png")
 
-    return ra_tiles, dec_tiles, proba_tiles, areapix
+    return ra_tiles, dec_tiles, proba_tiles

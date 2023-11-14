@@ -3042,17 +3042,17 @@ def GetAreaSkymap5090_Flat(filename):
 
 
 def Get90RegionPixReduced(hpxx, percentage, Nnside):
-    '''
-    Get90RegionPixReduced Obtains the region that leaves behind a given percentage of probability. 
+    """
+    Get90RegionPixReduced Obtains the region that leaves behind a given percentage of probability.
 
     Args:
         hpxx (_type_): Probability map
-        percentage (float): Percentage of the probability map that will not be considered 
+        percentage (float): Percentage of the probability map that will not be considered
         Nnside (_type_): NSide of the map used for contour determination
 
     Returns:
-        array: ra, dec, area of the reduced region 
-    '''
+        array: ra, dec, area of the reduced region
+    """
     nside = Nnside  # size of map used for contour determination
     hpx = hp.ud_grade(
         hpxx, nside_out=nside, power=-2, order_in="Nested", order_out="Nested"
@@ -3120,6 +3120,97 @@ def Get90RegionPixGal(hpxx, percentage, Nside):
         ipix_contour = int(value_contour[i][j])
         table_ipix_contour.append(ipix_contour)
     return table_ipix_contour
+
+
+def reduce_map_resolution(map, nside):
+    """
+    reduce_map_resolution _summary_
+
+    Args:
+        map (_type_): _description_
+        nside (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    print("Reducing map resulution to nside = {}".format(nside))
+    return hp.ud_grade(
+        map, nside_out=nside, power=-2, order_in="Ring", order_out="Ring"
+    )
+
+
+def theta_phi_to_ra_dec(theta, phi):
+    """
+    theta_phi_to_ra_dec _summary_
+
+    Args:
+        theta (_type_): _description_
+        phi (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    ra = np.rad2deg(phi)
+    dec = np.rad2deg(0.5 * np.pi - theta)
+
+    return ra, dec
+
+
+def ra_dec_to_theta_phi(ra, dec):
+    """
+    ra_dec_to_theta_phi _summary_
+
+    Args:
+        ra (_type_): _description_
+        dec (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    phi = np.deg2rad(ra)
+    theta = 0.5 * np.pi - np.deg2rad(dec)
+
+    return theta, phi
+
+
+def GetRegionInPercentage(prob, nside, percentage):
+    """
+    GetRegionInPercentage A version of the Get90RegionPixReduced
+
+    Args:
+        prob (array): healpy probability map
+        nside (int): NSide to use for the probability map
+        percentage (float): fraction of probability that will be kept
+
+    Returns:
+        array, array: Two arrays containing the ra and dec coordinates of the pixels
+                      within the probability map of nside resolution
+    """
+    # once the GenAlgo is implemented play with nside here to see changes on the regions overlap
+
+    hpx = reduce_map_resolution(prob, nside)
+
+    index_hpx = range(0, len(hpx))
+    hpx_indexed = np.c_[hpx, index_hpx]  # create a tuple of (proba_i, index_i)
+
+    sorted_proba = np.array(
+        sorted(hpx_indexed, key=lambda x: (x[0], int(x[1])), reverse=True)
+    )
+    cumsum_proba = np.c_[
+        np.cumsum(np.array(sorted_proba)[:, 0]), np.array(sorted_proba)[:, 1]
+    ]  # create a tuple of cumsum_i, index_i
+    index_min = np.argmin(
+        abs(cumsum_proba[:, 0] - percentage)
+    )  # find the index that reaches the percentage proba
+
+    pix_in_proba = sorted_proba[:, 1][0 : index_min + 1]
+
+    theta, phi = hp.pix2ang(nside, pix_in_proba.astype("int"))
+    rapix, decpix = theta_phi_to_ra_dec(theta, phi)
+
+    area = len(rapix) * hp.nside2pixarea(nside, degrees=True)
+
+    return rapix, decpix, area
 
 
 ######################################################
