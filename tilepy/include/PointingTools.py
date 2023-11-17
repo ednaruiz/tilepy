@@ -3138,7 +3138,7 @@ def reduce_map_resolution(map, nside):
         map, nside_out=nside, power=-2, order_in="Ring", order_out="Ring"
     )
 
-
+@u.quantity_input(theta=u.rad, phi=u.rad)
 def theta_phi_to_ra_dec(theta, phi):
     """
     theta_phi_to_ra_dec _summary_
@@ -3150,12 +3150,12 @@ def theta_phi_to_ra_dec(theta, phi):
     Returns:
         _type_: _description_
     """
-    ra = np.rad2deg(phi)
-    dec = np.rad2deg(0.5 * np.pi - theta)
+    ra = np.rad2deg(phi.to_value("rad"))*u.deg
+    dec = np.rad2deg(0.5 * np.pi - theta.to_value("rad"))*u.deg
 
     return ra, dec
 
-
+@u.quantity_input(ra=u.deg, dec=u.deg)
 def ra_dec_to_theta_phi(ra, dec):
     """
     ra_dec_to_theta_phi _summary_
@@ -3167,10 +3167,31 @@ def ra_dec_to_theta_phi(ra, dec):
     Returns:
         _type_: _description_
     """
-    phi = np.deg2rad(ra)
-    theta = 0.5 * np.pi - np.deg2rad(dec)
+    phi = np.deg2rad(ra.to_value("deg"))*u.rad
+    theta = (0.5 * np.pi - np.deg2rad(dec.to_value("deg")))*u.rad
 
     return theta, phi
+
+def pix_to_ra_dec(index, NSIDE):
+    
+    theta,phi=hp.pix2ang(NSIDE,index)
+    ra,dec = theta_phi_to_ra_dec(theta*u.rad,phi*u.rad)
+    
+    return ra, dec 
+
+
+@u.quantity_input(ra=u.deg, dec=u.deg)
+def ra_dec_to_pix(ra, dec, NSIDE):
+    theta, phi = ra_dec_to_theta_phi(ra,dec) 
+    
+    return hp.ang2pix(NSIDE,theta.to_value("rad"), phi.to_value("rad"))
+
+@u.quantity_input(ra=u.deg, dec=u.deg)
+def ra_dec_to_vect(ra,dec):
+    theta,phi = ra_dec_to_theta_phi(ra,dec)
+    vect = hp.ang2vec(theta.to_value('rad'), phi.to_value('rad'))
+
+    return vect
 
 
 def GetRegionInPercentage(prob, nside, percentage):
@@ -3206,7 +3227,7 @@ def GetRegionInPercentage(prob, nside, percentage):
     pix_in_proba = sorted_proba[:, 1][0 : index_min + 1]
 
     theta, phi = hp.pix2ang(nside, pix_in_proba.astype("int"))
-    rapix, decpix = theta_phi_to_ra_dec(theta, phi)
+    rapix, decpix = theta_phi_to_ra_dec(theta*u.rad, phi*u.rad)
 
     area = len(rapix) * hp.nside2pixarea(nside, degrees=True)
 
