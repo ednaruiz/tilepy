@@ -26,6 +26,8 @@ from .PointingTools import (
     ComputeProbability2D_SelectClusters,
     GiveProbToGalaxy,
     LoadGalaxiesSimulation,
+    GetRegionInPercentage,
+    ra_dec_to_theta_phi
 )
 from .Observatories import CTASouthObservatory, CTANorthObservatory
 import numpy as np
@@ -2057,7 +2059,7 @@ def get_gbm_tilings(gbm_grb, fov, radius, do_plot):
     prob_copy = np.copy(gbm_grb.prob)
     # max_prob gets updated at the end of the first for loop, inside this while
     while max_prob > min_prob and found_pointings < n_pointings:
-        print(fov)
+        
         prob_disc = []
 
         for i in range(0, len(reduced_vect)):
@@ -2070,8 +2072,8 @@ def get_gbm_tilings(gbm_grb, fov, radius, do_plot):
         disc_max = hp.query_disc(nside, reduced_vect[max_index], fov.to_value("rad"))
 
         centre_ra, centre_dec = reduced_ra[max_index], reduced_dec[max_index]
-        ra_tiles.append(centre_ra)
-        dec_tiles.append(centre_dec)
+        ra_tiles.append(centre_ra.to_value("deg"))
+        dec_tiles.append(centre_dec.to_value("deg"))
         proba_tiles.append(max_prob)
 
         for i in disc_max:
@@ -2138,4 +2140,4 @@ def get_gbm_tilings(gbm_grb, fov, radius, do_plot):
         hp.graticule()
         # plt.savefig(gbm_grb.grbname+"_Tiling_example.png")
 
-    return ra_tiles, dec_tiles, proba_tiles
+    return ra_tiles*u.deg, dec_tiles*u.deg, proba_tiles

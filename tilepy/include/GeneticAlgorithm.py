@@ -38,10 +38,10 @@ def intersection_area_inverse(nside, centers, region, radius):
     disc_pix = remove_repeated_pixels(disc_pix)
 
     b = []
-    for i in disc_pix:
-        for j in i:
-            b.append(j) 
-
+    for idisc in disc_pix:
+        for ipix in idisc:
+            b.append(ipix) 
+    
     area_intersection = len(b) * hp.nside2pixarea(nside , degrees = True)
     s = 3
     ##we use a soft inverse as we dont want to have 1/0,
