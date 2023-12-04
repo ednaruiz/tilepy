@@ -7,6 +7,7 @@ from astropy.time import Time
 from astropy.io import fits
 import healpy as hp
 
+from urllib.error import HTTPError
 
 class GBMMap:
     def __init__(self, grbname, trigger_time):
@@ -23,13 +24,15 @@ class GBMMap:
         self.year = t.datetime.year
         self.grbname = grbname
         self.filename = self.get_fits_filename()
+        print(self.filename)
         self.fits = self.open_fitsfile()
-        self.prob = hp.read_map(self.filename, field=range(1))
+        if self.fits[0] != 0:
+            self.prob = hp.read_map(self.filename, field=range(1))
 
-        self.npix = len(self.prob)
-        self.nside = hp.npix2nside(self.npix)
-        self.ra_centre = self.fits[0].header["RA_OBJ"]
-        self.dec_centre = self.fits[0].header["DEC_OBJ"]
+            self.npix = len(self.prob)
+            self.nside = hp.npix2nside(self.npix)
+            self.ra_centre = self.fits[0].header["RA_OBJ"]
+            self.dec_centre = self.fits[0].header["DEC_OBJ"]
 
     def get_fits_filename(self):
         """
